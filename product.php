@@ -50,12 +50,57 @@ if (isset($_POST['add_to_cart'])) {
 }
 
 $products = [
-    ['id' => 1, 'filename' => 'images/steak.jpg', 'product' => 'Ribeye Steak', 'price' => '20', 'sold' => 'No', 'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [['text' => 'This product is so cool. Wow love it.', 'extra' => 'I will buy more of this.', 'user' => 'Username'], ['text' => 'This is so good.', 'extra' => 'Really worth the money.', 'user' => 'Username']]],
-    ['id' => 2, 'filename' => 'images/apples.jpg', 'product' => 'Fresh Apples', 'price' => '5', 'sold' => 'No', 'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [['text' => 'This product is so cool. Wow love it.', 'extra' => 'I will buy more of this.', 'user' => 'Username']]],
-    ['id' => 3, 'filename' => 'images/salmon.jpg', 'product' => 'Salmon Fillet', 'price' => '15', 'sold' => 'Yes', 'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [['text' => 'This is so good.', 'extra' => 'Really worth the money.', 'user' => 'Username']]],
-    ['id' => 4, 'filename' => 'images/bread.jpg', 'product' => 'Artisan Bread', 'price' => '8', 'sold' => 'No', 'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [['text' => 'This product is so cool. Wow love it.', 'extra' => 'I will buy more of this.', 'user' => 'Username']]],
-    ['id' => 5, 'filename' => 'images/salami.jpg', 'product' => 'Sliced Salami', 'price' => '12', 'sold' => 'Yes', 'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [['text' => 'This is so good.', 'extra' => 'Really worth the money.', 'user' => 'Username']]],
-    ['id' => 6, 'filename' => 'images/cheese.jpg', 'product' => 'Cheese Platter', 'price' => '25', 'sold' => 'No', 'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [['text' => 'This product is so cool. Wow love it.', 'extra' => 'I will buy more of this.', 'user' => 'Username']]]
+  ['id' => 1, 'filename' => 'images/steak.jpg',   'product' => 'Ribeye Steak',    'price' => '20', 'sold' => 'No',  'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [
+      ['text'=>'This product is so cool. Wow love it.', 'extra'=>'I will buy more of this.', 'user'=>'Username'],
+      ['text'=>'This is so good.',               'extra'=>'Really worth the money.',   'user'=>'Username']
+    ]
+  ],
+  ['id' => 2, 'filename' => 'images/apples.jpg',  'product' => 'Fresh Apples',    'price' => '5',  'sold' => 'No',  'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [
+      ['text'=>'This product is so cool. Wow love it.', 'extra'=>'I will buy more of this.', 'user'=>'Username']
+    ]
+  ],
+  ['id' => 3, 'filename' => 'images/salmon.jpg',  'product' => 'Salmon Fillet',   'price' => '15', 'sold' => 'Yes', 'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [
+      ['text'=>'This is so good.', 'extra'=>'Really worth the money.', 'user'=>'Username']
+    ]
+  ],
+  ['id' => 4, 'filename' => 'images/bread.jpg',   'product' => 'Artisan Bread',   'price' => '8',  'sold' => 'No',  'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [
+      ['text'=>'This product is so cool. Wow love it.', 'extra'=>'I will buy more of this.', 'user'=>'Username']
+    ]
+  ],
+  ['id' => 5, 'filename' => 'images/salami.jpg',  'product' => 'Sliced Salami',   'price' => '12', 'sold' => 'Yes', 'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [
+      ['text'=>'This is so good.', 'extra'=>'Really worth the money.', 'user'=>'Username']
+    ]
+  ],
+  ['id' => 6, 'filename' => 'images/cheese.jpg',  'product' => 'Cheese Platter',  'price' => '25', 'sold' => 'No',  'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [
+      ['text'=>'This product is so cool. Wow love it.', 'extra'=>'I will buy more of this.', 'user'=>'Username']
+    ]
+  ],
+
+  // new items
+  ['id' => 7,  'filename' => 'images/ham.jpg',      'product' => 'Prosciutto Ham',  'price' => '18', 'sold' => 'No',  'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [
+      ['text'=>'Delicious and flavorful!', 'extra'=>'Perfect for sandwiches.', 'user'=>'Username']
+    ]
+  ],
+  ['id' => 8,  'filename' => 'images/lettuce.jpg',  'product' => 'Organic Lettuce', 'price' => '3',  'sold' => 'No',  'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [
+      ['text'=>'Crisp and fresh!', 'extra'=>'Great in salads.', 'user'=>'Username']
+    ]
+  ],
+  ['id' => 9,  'filename' => 'images/pork.jpg',     'product' => 'Pork',            'price' => '15', 'sold' => 'No',  'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [
+      ['text'=>'Tender cut.', 'extra'=>'Very juicy and tasty.', 'user'=>'Username']
+    ]
+  ],
+  ['id' => 10, 'filename' => 'images/broccoli.jpg','product' => 'Broccoli',        'price' => '4',  'sold' => 'No',  'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [
+      ['text'=>'Super fresh!', 'extra'=>'Loved the crunch.', 'user'=>'Username']
+    ]
+  ],
+  ['id' => 11, 'filename' => 'images/prawn.jpg',   'product' => 'Prawns',          'price' => '12', 'sold' => 'No',  'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [
+      ['text'=>'Amazing quality.', 'extra'=>'Perfectly cooked.', 'user'=>'Username']
+    ]
+  ],
+  ['id' => 12, 'filename' => 'images/loaf.jpg',    'product' => 'Sourdough Loaf',  'price' => '6',  'sold' => 'No',  'delivery' => '30th March, 2025', 'delivery_charge' => 'Rs.100', 'reviews' => [
+      ['text'=>'Delightfully tangy.', 'extra'=>'Best toasted.', 'user'=>'Username']
+    ]
+  ],
 ];
 
 $productId = isset($_GET['id']) ? (int)$_GET['id'] : 1;

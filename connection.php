@@ -1,4 +1,4 @@
-<?php $conn = oci_connect('CoolCarters', 'coolcarters', '//localhost/xe'); if (!$conn) {
+<?php $conn = oci_connect('bibash', 'bibash', '//localhost/xe'); if (!$conn) {
    $m = oci_error();
    echo $m['message'], "\n";
    exit; } else {
