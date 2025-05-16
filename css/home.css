@@ -1,0 +1,100 @@
+/* Custom styles for home page */
+body {
+    background-color: #e5e5e5;
+    font-family: Arial, sans-serif;
+}
+
+.search-container {
+    background-color: #d1d1d1;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.search-container input[type="text"] {
+    width: 200px;
+    padding: 5px;
+    border: none;
+    border-radius: 5px;
+    background-color: #fff;
+}
+
+.categories-header {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #333;
+    margin-left: 20px;
+    margin-bottom: 20px;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    padding: 0 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.card {
+    background-color: #d3d3d3;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    text-align: center;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card-image {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    display: block;
+    object-fit: cover;
+    background-color: #b0b0b0; /* Fallback background if image fails to load */
+}
+
+.card .rating {
+    margin: 5px 0;
+}
+
+.card .rating::after {
+    content: " ★ ★ ★ ☆ ☆";
+    color: #000;
+}
+
+.card p {
+    margin: 2px 0;
+    font-size: 0.9rem;
+}
+
+.card strong {
+    font-weight: bold;
+}
+
+
+@media (max-width: 1024px) {
+    .product-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .product-grid {
+        grid-template-columns: 1fr;
+    }
+    .search-container input[type="text"] {
+        width: 150px;
+    }
+}

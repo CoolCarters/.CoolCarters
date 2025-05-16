@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="./css/style.css" />
 </head>
 <body>
+  <?php include "homeNavbar.php"; ?>
   <div class="container">
     <div class="left-panel">
       <h2>Reach Out - We’re listening!</h2>
@@ -58,5 +59,7 @@
     <p>Email:</p>
     <p>Contact Number:</p>
   </div>
+
+  <?php include "footer.php"; ?>
 </body>
 </html>

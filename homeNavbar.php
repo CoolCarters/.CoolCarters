@@ -32,7 +32,7 @@
                 <div class="md:flex md:items-center md:space-x-8">
                     <!-- Vertical line separator -->
                     <div class="h-6 border-l border-gray-300"></div>
-                    <a href="" class="text-white hover:text-blue-200 px-3 py-2 rounded-md text-sm font-medium transition duration-300">Home</a>
+                    <a href="./index.php" class="text-white hover:text-blue-200 px-3 py-2 rounded-md text-sm font-medium transition duration-300">Home</a>
                     <!-- Rest of your nav links -->
                 </div>
 

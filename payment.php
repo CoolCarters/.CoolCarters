@@ -1,6 +1,6 @@
 <?php
 $paypalURL = 'https://www.sandbox.paypal.com/cgi-bin/webscr';
-$paypalID = 'sb-6pvw141153523@business.example.com'; //Business Email
+$paypalID = 'sb-zscoe41152465@business.example.com'; //Business Email
 
 ?>
 <!DOCTYPE html>
