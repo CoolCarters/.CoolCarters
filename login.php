@@ -1,11 +1,72 @@
+<?php
+session_start();
+
+// Form processing logic
+function test_input($data) {
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $data;
+}
+
+$email = isset($_SESSION['email']) ? $_SESSION['email'] : '';
+$role = isset($_SESSION['role']) ? $_SESSION['role'] : '';
+$emailErr = isset($_SESSION['emailErr']) ? $_SESSION['emailErr'] : '';
+$passwordErr = isset($_SESSION['passwordErr']) ? $_SESSION['passwordErr'] : '';
+$roleErr = isset($_SESSION['roleErr']) ? $_SESSION['roleErr'] : '';
+$successMsg = isset($_SESSION['successMsg']) ? $_SESSION['successMsg'] : '';
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $emailErr = $passwordErr = $roleErr = "";
+    $email = $password = $role = "";
+    $successMsg = "";
+
+    if (empty($_POST["email"])) {
+        $emailErr = "Email is required";
+    } else {
+        $email = test_input($_POST["email"]);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $emailErr = "Invalid email format";
+        }
+    }
+
+    if (empty($_POST["password"])) {
+        $passwordErr = "Password is required";
+    } else {
+        $password = test_input($_POST["password"]);
+    }
+
+    if (empty($_POST["role"])) {
+        $roleErr = "Role is required";
+    } else {
+        $role = test_input($_POST["role"]);
+    }
+
+    if (empty($emailErr) && empty($passwordErr) && empty($roleErr)) {
+        $successMsg = "Login successful! Redirecting...";
+    }
+
+    // Store variables in session
+    $_SESSION['email'] = $email;
+    $_SESSION['role'] = $role;
+    $_SESSION['emailErr'] = $emailErr;
+    $_SESSION['passwordErr'] = $passwordErr;
+    $_SESSION['roleErr'] = $roleErr;
+    $_SESSION['successMsg'] = $successMsg;
+}
+
+// Clear session variables after processing
+unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['passwordErr'], $_SESSION['roleErr'], $_SESSION['successMsg']);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CoolCarters</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="./css/Login.css">
     <style>
         * {
             margin: 0;
@@ -22,55 +83,6 @@
             flex-direction: column;
         }
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 5%;
-            background-color: #2e2eff;
-            color: white;
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo-img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid white;
-            object-fit: contain;
-        }
-
-        .logo-text {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        nav {
-            display: flex;
-            gap: 20px;
-        }
-
-        nav a {
-            background-color: white;
-            color: black;
-            text-decoration: underline;
-            text-decoration-color: black;
-            font-size: 0.9rem;
-            padding: 8px 15px;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-        }
-
-        nav a:hover {
-            background-color: #d3d3d3;
-            text-decoration: underline;
-        }
-
         .main-content {
             display: flex;
             justify-content: center;
@@ -81,18 +93,16 @@
         }
 
         .signup-section {
-            background-color: rgb(163, 177, 211);
+            background-color: rgb(224, 225, 226);
             width: 100%;
             max-width: 450px;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
-            align-items: center;
             padding: 40px;
-            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             flex: 1;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-            z-index: 1;
+            z-index: 0;
         }
 
         .welcome-section {
@@ -421,7 +431,7 @@
         }
 
         .signup-container {
-            background-color: rgb(163, 177, 211);
+            background-color: rgb(224, 225, 226);
             padding: 40px;
             width: 100%;
             display: none;
@@ -483,7 +493,7 @@
         }
 
         .next-btn:hover {
-            background-color:rgb(15, 15, 15)
+            background-color: rgb(15, 15, 15);
         }
 
         #trader-form .gender-group {
@@ -505,88 +515,145 @@
         #customer-form .form-group:nth-child(5) {
             margin-bottom: 20px;
         }
+
+        .mobile-interface {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            padding: 20px;
+            background-color: white;
+            text-align: center;
+        }
+
+        .mobile-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mobile-logo-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid rgb(1, 1, 1);
+            object-fit: contain;
+        }
+
+        .mobile-logo-text {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2e2eff;
+        }
+
+        .mobile-option-btn {
+            background-color: rgb(42, 127, 218);
+            color: white;
+            border: none;
+            padding: 20px;
+            width: 150px;
+            max-width: 180px;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin: 15px 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .mobile-option-btn:hover {
+            background-color: rgb(33, 100, 172);
+        }
+
+        .mobile-button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .mobile-form-container {
+            display: none;
+            width: 100%;
+            max-width: 450px;
+            margin-top: 20px;
+        }
+
+        .mobile-form-container.active {
+            display: block;
+        }
+
+        @media (max-width: 767px) {
+            .main-content {
+                display: none;
+            }
+
+            .mobile-interface {
+                display: flex;
+            }
+
+            .login-form,
+            .signup-section,
+            .welcome-section {
+                display: none;
+            }
+
+            .mobile-form-container .login-form,
+            .mobile-form-container .signup-section {
+                display: block;
+                max-width: 100%;
+                padding: 20px;
+            }
+
+            .mobile-form-container .signup-section {
+                background-color: rgb(224, 225, 226);
+            }
+
+            .mobile-form-container .welcome-section {
+                display: none;
+            }
+
+            nav {
+                display: none;
+            }
+
+            footer {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <div class="logo-container">
-            <img src="images/CoolCarters Sample 2.svg" alt="CoolCarters Logo" class="logo-img">
-            <div class="logo-text">CoolCarters</div>
-        </div>
-        <nav>
-            <a href="homenavbar.php">Home</a>
-            <a href="aboutus.php">About us</a>
-            <a href="contactus.php">Contact us</a>
-        </nav>
-    </header>
-    
+    <?php
+        include "homeNavbar.php";
+    ?>
     <div class="main-content">
         <section class="login-form">
-            <?php
-            $email = $password = $role = "";
-            $emailErr = $passwordErr = $roleErr = "";
-            $successMsg = "";
-
-            if ($_SERVER["REQUEST_METHOD"] == "POST") {
-                if (empty($_POST["email"])) {
-                    $emailErr = "Email is required";
-                } else {
-                    $email = test_input($_POST["email"]);
-                    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                        $emailErr = "Invalid email format";
-                    }
-                }
-
-                if (empty($_POST["password"])) {
-                    $passwordErr = "Password is required";
-                } else {
-                    $password = test_input($_POST["password"]);
-                }
-
-                if (empty($_POST["role"])) {
-                    $roleErr = "Role is required";
-                } else {
-                    $role = test_input($_POST["role"]);
-                }
-
-                if (empty($emailErr) && empty($passwordErr) && empty($roleErr)) {
-                    $successMsg = "Login successful! Redirecting...";
-                }
-            }
-
-            function test_input($data) {
-                $data = trim($data);
-                $data = stripslashes($data);
-                $data = htmlspecialchars($data);
-                return $data;
-            }
-            ?>
-
             <h2>Log In</h2>
 
             <?php if (!empty($successMsg)): ?>
-                <div class="success"><?php echo $successMsg; ?></div>
+                <div class="success"><?php echo htmlspecialchars($successMsg); ?></div>
             <?php endif; ?>
 
             <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
                 <div class="form-group">
-                    <input type="email" id="email" name="email" placeholder="Email" required>
-                    <span class="error"><?php echo $emailErr; ?></span>
+                    <input type="email" id="email" name="email" placeholder="Email" value="<?php echo htmlspecialchars($email); ?>" required>
+                    <span class="error"><?php echo htmlspecialchars($emailErr); ?></span>
                 </div>
                 <div class="form-group" style="position: relative;">
                     <input type="password" id="password" name="password" placeholder="Password" required>
-                    <img src="images/hide.png" alt="Toggle Password" id="togglePassword" 
-                         style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
-                    <span class="error"><?php echo $passwordErr; ?></span>
+                    <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
+                         data-input="password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                    <span class="error"><?php echo htmlspecialchars($passwordErr); ?></span>
                 </div>
 
                 <div class="form-group">
                     <select id="role" name="role">
-                        <option value="" disabled selected>Select Role</option>
-                        <option value="trader" <?php if ($role == "trader") echo "selected"; ?>>Trader</option>
-                        <option value="customer" <?php if ($role == "customer") echo "selected"; ?>>Customer</option>
+                        <option value="" disabled <?php if (empty($role)) echo 'selected'; ?>>Select Role</option>
+                        <option value="trader" <?php if ($role == 'trader') echo 'selected'; ?>>Trader</option>
+                        <option value="customer" <?php if ($role == 'customer') echo 'selected'; ?>>Customer</option>
                     </select>
-                    <span class="error"><?php echo $roleErr; ?></span>
+                    <span class="error"><?php echo htmlspecialchars($roleErr); ?></span>
                 </div>
 
                 <button type="submit" class="login-btn">Log In</button>
@@ -640,7 +707,7 @@
                     </div>
                     <div class="form-group" style="position: relative;">
                         <input type="password" id="trader-confirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
-                         <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
+                        <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
                              data-input="trader-confirmPassword" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
                     </div>
                     <div class="form-group">
@@ -675,21 +742,16 @@
                         <label for="female">Female</label>
                         <input type="radio" id="male" name="gender" value="male">
                         <label for="male">Male</label>
-                    </div>
-                    <div class="form-group" style= "position: relative;">
+                    </div><br>
+                    <div class="form-group" style="position: relative;">
                         <input type="password" id="customer-password" name="password" placeholder="Password" required>
                         <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
-                             data-input="trader-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                             data-input="customer-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
                     </div>
-                    <div class="form-group">
-                        <input type="password" id="customer-password" name="Password" placeholder=" Password" required>
-                        <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
-                            data-input="trader-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
-                    </div>
-                    <div class="form-group">
+                    <div class="form-group" style="position: relative;">
                         <input type="password" id="customer-confirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
                         <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
-                             data-input="trader-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                             data-input="customer-confirmPassword" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
                     </div>
                     <button type="submit" class="next-btn">Next</button>
                 </form>
@@ -704,6 +766,150 @@
             </div>
         </section>
     </div>
+
+    <div class="mobile-interface">
+        <div class="mobile-logo-container">
+            <img src="images/CoolCarters Sample 2.svg" alt="CoolCarters Logo" class="mobile-logo-img">
+            <div class="mobile-logo-text">CoolCarters</div>
+        </div>
+        <div class="mobile-button-container">
+            <button class="mobile-option-btn" id="mobileLoginBtn">Log In</button>
+            <button class="mobile-option-btn" id="mobileSignupBtn">Sign Up</button>
+        </div>
+        <div class="mobile-form-container" id="mobileLoginForm">
+            <section class="login-form">
+                <h2>Log In</h2>
+
+                <?php if (!empty($successMsg)): ?>
+                    <div class="success"><?php echo htmlspecialchars($successMsg); ?></div>
+                <?php endif; ?>
+
+                <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+                    <div class="form-group">
+                        <input type="email" id="mobile-email" name="email" placeholder="Email" value="<?php echo htmlspecialchars($email); ?>" required>
+                        <span class="error"><?php echo htmlspecialchars($emailErr); ?></span>
+                    </div>
+                    <div class="form-group" style="position: relative;">
+                        <input type="password" id="mobile-password" name="password" placeholder="Password" required>
+                        <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
+                             data-input="mobile-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                        <span class="error"><?php echo htmlspecialchars($passwordErr); ?></span>
+                    </div>
+
+                    <div class="form-group">
+                        <select id="mobile-role" name="role">
+                            <option value="" disabled <?php if (empty($role)) echo 'selected'; ?>>Select Role</option>
+                            <option value="trader" <?php if ($role == 'trader') echo 'selected'; ?>>Trader</option>
+                            <option value="customer" <?php if ($role == 'customer') echo 'selected'; ?>>Customer</option>
+                        </select>
+                        <span class="error"><?php echo htmlspecialchars($roleErr); ?></span>
+                    </div>
+
+                    <button type="submit" class="login-btn">Log In</button>
+                    <div class="terms">
+                        <label for="mobile-terms">I accept the terms and conditions:</label>
+                        <input type="checkbox" id="mobile-terms" name="terms" required>
+                    </div>
+
+                    <div class="divider">OR</div>
+
+                    <div class="social-login">
+                        <div class="social-container">
+                            <p>CONTINUE WITH:</p>
+                            <div class="social-buttons">
+                                <button class="social-btn">
+                                    <img src="images/icons8-gmail-48.png" class="Gmail">
+                                </button>
+                                <button class="social-btn">
+                                    <img src="images/icons8-facebook-48.png" class="Facebook">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </section>
+        </div>
+        <div class="mobile-form-container" id="mobileSignupForm">
+            <section class="signup-section">
+                <div id="mobile-trader-form" class="signup-container active">
+                    <h2>Sign up</h2>
+                    <form>
+                        <div class="form-group role-group">
+                            <label>Role:</label>
+                            <input type="radio" id="mobile-trader-role" name="role" value="trader" checked>
+                            <label for="mobile-trader-role">Trader</label>
+                            <input type="radio" id="mobile-customer-role" name="role" value="customer">
+                            <label for="mobile-customer-role">Customer</label>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="mobile-trader-firstName" name="firstName" placeholder="First Name" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="mobile-trader-lastName" name="lastName" placeholder="Last Name" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="mobile-trader-email" name="email" placeholder="Email" required>
+                        </div>
+                        <div class="form-group" style="position: relative;">
+                            <input type="password" id="mobile-trader-password" name="password" placeholder="Password" required>
+                            <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
+                                 data-input="mobile-trader-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                        </div>
+                        <div class="form-group" style="position: relative;">
+                            <input type="password" id="mobile-trader-confirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
+                            <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
+                                 data-input="mobile-trader-confirmPassword" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="mobile-companyName" name="companyName" placeholder="Company name" required>
+                        </div>
+                        <button type="submit" class="next-btn">Next</button>
+                    </form>
+                </div>
+
+                <div id="mobile-customer-form" class="signup-container">
+                    <h2>Sign up</h2>
+                    <form>
+                        <div class="form-group role-group">
+                            <label>Role:</label>
+                            <input type="radio" id="mobile-trader-role-customer" name="role" value="trader">
+                            <label for="mobile-trader-role-customer">Trader</label>
+                            <input type="radio" id="mobile-customer-role-customer" name="role" value="customer" checked>
+                            <label for="mobile-customer-role-customer">Customer</label>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="mobile-customer-firstName" name="firstName" placeholder="First Name" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="mobile-customer-lastName" name="lastName" placeholder="Last Name" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="mobile-customer-email" name="email" placeholder="Email" required>
+                        </div>
+                        <div class="form-group gender-group">
+                            <label>Gender:</label>
+                            <input type="radio" id="mobile-female" name="gender" value="female">
+                            <label for="mobile-female">Female</label>
+                            <input type="radio" id="mobile-male" name="gender" value="male">
+                            <label for="mobile-male">Male</label>
+                        </div>
+                        <div class="form-group" style="position: relative;">
+                            <input type="password" id="mobile-customer-password" name="password" placeholder="Password" required>
+                            <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
+                                 data-input="mobile-customer-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                        </div>
+                        <div class="form-group" style="position: relative;">
+                            <input type="password" id="mobile-customer-confirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
+                            <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
+                                 data-input="mobile-customer-confirmPassword" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                        </div>
+                        <button type="submit" class="next-btn">Next</button>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </div>
+
     <footer>
         <div class="payment-method">
             <div class="top-row">
@@ -723,77 +929,122 @@
     </footer>
 
     <script>
-        const passwordInput = document.getElementById("password");
-        const togglePassword = document.getElementById("togglePassword");
-        const signUpBtn = document.getElementById("signUpBtn");
-        const welcomeSection = document.querySelector(".welcome-section");
-        const welcomeContent = document.getElementById("welcomeContent");
-        const traderForm = document.getElementById("trader-form");
-        const customerForm = document.getElementById("customer-form");
-        const signupSection = document.querySelector(".signup-section");
+        document.addEventListener('DOMContentLoaded', function() {
+            const signUpBtn = document.getElementById("signUpBtn");
+            const welcomeSection = document.querySelector(".welcome-section");
+            const welcomeContent = document.getElementById("welcomeContent");
+            const traderForm = document.getElementById("trader-form");
+            const customerForm = document.getElementById("customer-form");
+            const signupSection = document.querySelector(".signup-section");
+            const mobileSignupSection = document.querySelector("#mobileSignupForm .signup-section");
 
-        document.querySelectorAll('.toggle-password').forEach(toggle => {
-        togglePassword.addEventListener("click", function () {
-            const isPassword = passwordInput.type === "password";
-            passwordInput.type = isPassword ? "text" : "password";
-             this.src = isPassword ? "images/view.png" : "images/hide.png";
-        });
-    });
-        function showSignup() {
-            welcomeContent.classList.add("fade-out");
-            setTimeout(() => {
-                welcomeContent.innerHTML = `
-                    <div class="text-center">
-                        <h1 class="text-4xl text-gray-800 mb-4">NAMASTE!</h1>
-                        <p class="text-gray-700 mb-6">We're excited to have you join us—sign up now and start exploring!</p>
-                        <div>
-                            <span class="text-gray-700 mr-2"><em><b>Already have an account?<b></em></span>
-                            <button class="login-btn-alt" id="backToLogin">Log In</button>
+            // Password toggle functionality for all password fields
+            document.querySelectorAll('.toggle-password').forEach(toggle => {
+                toggle.addEventListener("click", function () {
+                    const inputId = this.getAttribute("data-input");
+                    const input = document.getElementById(inputId);
+                    const isPassword = input.type === "password";
+                    input.type = isPassword ? "text" : "password";
+                    this.src = isPassword ? "images/view.png" : "images/hide.png";
+                });
+            });
+
+            function showSignup() {
+                welcomeContent.classList.add("fade-out");
+                setTimeout(() => {
+                    welcomeContent.innerHTML = `
+                        <div class="text-center">
+                            <h1 class="text-4xl text-gray-800 mb-4">NAMASTE!</h1>
+                            <p class="text-gray-700 mb-6">We're excited to have you join us—sign up now and start exploring!</p>
+                            <div>
+                                <span class="text-gray-700 mr-2"><em><b>Already have an account?</b></em></span>
+                                <button class="login-btn-alt" id="backToLogin">Log In</button>
+                            </div>
                         </div>
-                    </div>
-                `;
-                welcomeContent.classList.remove("fade-out");
-                const selectedRole = document.querySelector('input[name="role"]:checked')?.value || 'trader';
+                    `;
+                    welcomeContent.classList.remove("fade-out");
+                    const selectedRole = document.querySelector('input[name="role"]:checked')?.value || 'trader';
+                    traderForm.classList.toggle('active', selectedRole === 'trader');
+                    customerForm.classList.toggle('active', selectedRole === 'customer');
+                    const backToLogin = document.getElementById("backToLogin");
+                    backToLogin.addEventListener("click", showLogin);
+                }, 300);
+                welcomeSection.classList.add("slid");
+            }
+
+            function showLogin() {
+                welcomeContent.classList.add("fade-out");
+                setTimeout(() => {
+                    welcomeContent.innerHTML = `
+                        <h1>WELCOME BACK!</h1>
+                        <p>We want you to join us to stay connected with the family.</p>
+                        <p><em><b>New to CoolCarters?</b></em><button class="signup-btn" id="signUpBtn">Sign Up</button></p>
+                    `;
+                    welcomeContent.classList.remove("fade-out");
+                    traderForm.classList.remove("active");
+                    customerForm.classList.remove("active");
+                    const newSignUpBtn = document.getElementById("signUpBtn");
+                    newSignUpBtn.addEventListener("click", showSignup);
+                }, 300);
+                welcomeSection.classList.remove("slid");
+            }
+
+            signUpBtn.addEventListener("click", showSignup);
+
+            function switchForm(event) {
+                const selectedRole = event.target.value;
+                console.log('Selected Role:', selectedRole); // Debug log
+                // Desktop forms
                 traderForm.classList.toggle('active', selectedRole === 'trader');
                 customerForm.classList.toggle('active', selectedRole === 'customer');
-                const backToLogin = document.getElementById("backToLogin");
-                backToLogin.addEventListener("click", showLogin);
-            }, 300);
-            welcomeSection.classList.add("slid");
-        }
+                document.querySelectorAll('input[name="role"][value="trader"]').forEach(radio => radio.checked = selectedRole === 'trader');
+                document.querySelectorAll('input[name="role"][value="customer"]').forEach(radio => radio.checked = selectedRole === 'customer');
 
-        function showLogin() {
-            welcomeContent.classList.add("fade-out");
-            setTimeout(() => {
-                welcomeContent.innerHTML = `
-                    <h1>WELCOME BACK!</h1>
-                    <p>We want you to join us to stay connected with the family.</p>
-                    <p><em><b>New to CoolCarters?</b></em><button class="signup-btn" id="signUpBtn">Sign Up</button></p>
-                `;
-                welcomeContent.classList.remove("fade-out");
-                traderForm.classList.remove("active");
-                customerForm.classList.remove("active");
-                const newSignUpBtn = document.getElementById("signUpBtn");
-                newSignUpBtn.addEventListener("click", showSignup);
-            }, 300);
-            welcomeSection.classList.remove("slid");
-        }
-
-        signUpBtn.addEventListener("click", showSignup);
-
-        function switchForm(event) {
-            const selectedRole = event.target.value;
-            traderForm.classList.toggle('active', selectedRole === 'trader');
-            customerForm.classList.toggle('active', selectedRole === 'customer');
-            document.querySelectorAll('input[name="role"][value="trader"]').forEach(radio => radio.checked = selectedRole === 'trader');
-            document.querySelectorAll('input[name="role"][value="customer"]').forEach(radio => radio.checked = selectedRole === 'customer');
-        }
-
-        signupSection.addEventListener('change', function(event) {
-            if (event.target.name === 'role') {
-                switchForm(event);
+                // Mobile forms
+                const mobileTraderForm = document.getElementById('mobile-trader-form');
+                const mobileCustomerForm = document.getElementById('mobile-customer-form');
+                if (mobileTraderForm && mobileCustomerForm) {
+                    mobileTraderForm.classList.toggle('active', selectedRole === 'trader');
+                    mobileCustomerForm.classList.toggle('active', selectedRole === 'customer');
+                }
             }
+
+            // Event listener for desktop signup section
+            signupSection.addEventListener('change', function(event) {
+                if (event.target.name === 'role') {
+                    switchForm(event);
+                }
+            });
+
+            // Event listener for mobile signup section
+            if (mobileSignupSection) {
+                mobileSignupSection.addEventListener('change', function(event) {
+                    if (event.target.name === 'role') {
+                        switchForm(event);
+                    }
+                });
+            }
+
+            // Mobile Interface Script
+            const mobileLoginBtn = document.getElementById('mobileLoginBtn');
+            const mobileSignupBtn = document.getElementById('mobileSignupBtn');
+            const mobileLoginForm = document.getElementById('mobileLoginForm');
+            const mobileSignupForm = document.getElementById('mobileSignupForm');
+
+            mobileLoginBtn.addEventListener('click', () => {
+                mobileLoginForm.classList.add('active');
+                mobileSignupForm.classList.remove('active');
+            });
+
+            mobileSignupBtn.addEventListener('click', () => {
+                mobileSignupForm.classList.add('active');
+                mobileLoginForm.classList.remove('active');
+                const selectedRole = document.querySelector('#mobileSignupForm input[name="role"]:checked')?.value || 'trader';
+                document.getElementById('mobile-trader-form').classList.toggle('active', selectedRole === 'trader');
+                document.getElementById('mobile-customer-form').classList.toggle('active', selectedRole === 'customer');
+            });
         });
     </script>
 </body>
+
 </html>
