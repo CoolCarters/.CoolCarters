@@ -624,11 +624,71 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
     </style>
 </head>
 <body>
+<<<<<<< Updated upstream
     <?php
         include "homeNavbar.php";
     ?>
     <div class="main-content">
         <section class="login-form">
+=======
+    <header>
+        <div class="logo-container">
+            <img src="images/CoolCarters Sample 2.svg" alt="CoolCarters Logo" class="logo-img">
+            <div class="logo-text">CoolCarters</div>
+        </div>
+        <nav>
+            <a href="index.php">Home</a>
+            <a href="aboutus.php">About us</a>
+            <a href="contactus.php">Contact us</a>
+        </nav>
+    </header>
+    
+    <div class="main-content">
+        <section class="login-form">
+            <?php
+            
+            $email = $password = $role = "";
+            $emailErr = $passwordErr = $roleErr = "";
+            $successMsg = "";
+
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                if (empty($_POST["email"])) {
+                    $emailErr = "Email is required";
+                } else {
+                    $email = test_input($_POST["email"]);
+                    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        $emailErr = "Invalid email format";
+                    }
+                }
+
+                if (empty($_POST["password"])) {
+                    $passwordErr = "Password is required";
+                } else {
+                    $password = test_input($_POST["password"]);
+                }
+
+                if (empty($_POST["role"])) {
+                    $roleErr = "Role is required";
+                } else {
+                    $role = test_input($_POST["role"]);
+                }
+
+                if (empty($emailErr) && empty($passwordErr) && empty($roleErr)) {
+                    $successMsg = "Login successful! Redirecting...";
+
+
+                }
+            }
+
+            function test_input($data) {
+                $data = trim($data);
+                $data = stripslashes($data);
+                $data = htmlspecialchars($data);
+                return $data;
+            }
+            ?>
+
+>>>>>>> Stashed changes
             <h2>Log In</h2>
 
             <?php if (!empty($successMsg)): ?>
@@ -683,7 +743,7 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
         <section class="signup-section">
             <div id="trader-form" class="signup-container active">
                 <h2>Sign up</h2>
-                <form>
+                <form method="POST" action="signup_process.php">
                     <div class="form-group role-group">
                         <label>Role:</label>
                         <input type="radio" id="trader-role" name="role" value="trader" checked>
@@ -719,7 +779,7 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
 
             <div id="customer-form" class="signup-container">
                 <h2>Sign up</h2>
-                <form>
+                <form method="POST" action="signup_process.php">
                     <div class="form-group role-group">
                         <label>Role:</label>
                         <input type="radio" id="trader-role" name="role" value="trader">
