@@ -1,5 +1,5 @@
 <?php
-require_once('connection.php');  // Oracle DB connection file
+require_once('connection.php');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $role = $_POST["role"];
@@ -20,7 +20,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         oci_bind_by_name($stmt, ":email", $email);
         oci_bind_by_name($stmt, ":password", $password);
         oci_bind_by_name($stmt, ":gender", $gender);
-
     } elseif ($role === "trader") {
         $companyName = $_POST["companyName"];
 
@@ -47,4 +46,3 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     oci_free_statement($stmt);
     oci_close($conn);
 }
-?>
