@@ -2,7 +2,8 @@
 session_start();
 
 // Form processing logic
-function test_input($data) {
+function test_input($data)
+{
     $data = trim($data);
     $data = stripslashes($data);
     $data = htmlspecialchars($data);
@@ -154,7 +155,8 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
             white-space: nowrap;
         }
 
-        .signup-btn, .login-btn-alt {
+        .signup-btn,
+        .login-btn-alt {
             background-color: rgb(42, 127, 218);
             color: white;
             border: none;
@@ -167,7 +169,8 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
             transition: background-color 0.3s ease;
         }
 
-        .signup-btn:hover, .login-btn-alt:hover {
+        .signup-btn:hover,
+        .login-btn-alt:hover {
             background-color: rgb(33, 100, 172);
         }
 
@@ -461,13 +464,15 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
             font-size: 0.9em;
         }
 
-        .role-group, .gender-group {
+        .role-group,
+        .gender-group {
             display: flex;
             align-items: center;
             margin-bottom: 15px;
         }
 
-        .role-group label, .gender-group label {
+        .role-group label,
+        .gender-group label {
             margin-left: 5px;
             color: #555;
             font-size: 0.9em;
@@ -623,74 +628,14 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
         }
     </style>
 </head>
+
 <body>
-<<<<<<< Updated upstream
     <?php
-        include "homeNavbar.php";
+    include "homeNavbar.php";
     ?>
     <div class="main-content">
         <section class="login-form">
-=======
-    <header>
-        <div class="logo-container">
-            <img src="images/CoolCarters Sample 2.svg" alt="CoolCarters Logo" class="logo-img">
-            <div class="logo-text">CoolCarters</div>
-        </div>
-        <nav>
-            <a href="index.php">Home</a>
-            <a href="aboutus.php">About us</a>
-            <a href="contactus.php">Contact us</a>
-        </nav>
-    </header>
-    
-    <div class="main-content">
-        <section class="login-form">
-            <?php
-            
-            $email = $password = $role = "";
-            $emailErr = $passwordErr = $roleErr = "";
-            $successMsg = "";
-
-            if ($_SERVER["REQUEST_METHOD"] == "POST") {
-                if (empty($_POST["email"])) {
-                    $emailErr = "Email is required";
-                } else {
-                    $email = test_input($_POST["email"]);
-                    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                        $emailErr = "Invalid email format";
-                    }
-                }
-
-                if (empty($_POST["password"])) {
-                    $passwordErr = "Password is required";
-                } else {
-                    $password = test_input($_POST["password"]);
-                }
-
-                if (empty($_POST["role"])) {
-                    $roleErr = "Role is required";
-                } else {
-                    $role = test_input($_POST["role"]);
-                }
-
-                if (empty($emailErr) && empty($passwordErr) && empty($roleErr)) {
-                    $successMsg = "Login successful! Redirecting...";
-
-
-                }
-            }
-
-            function test_input($data) {
-                $data = trim($data);
-                $data = stripslashes($data);
-                $data = htmlspecialchars($data);
-                return $data;
-            }
-            ?>
-
->>>>>>> Stashed changes
             <h2>Log In</h2>
-
             <?php if (!empty($successMsg)): ?>
                 <div class="success"><?php echo htmlspecialchars($successMsg); ?></div>
             <?php endif; ?>
@@ -702,8 +647,8 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
                 </div>
                 <div class="form-group" style="position: relative;">
                     <input type="password" id="password" name="password" placeholder="Password" required>
-                    <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
-                         data-input="password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                    <img src="images/hide.png" alt="Toggle Password" class="toggle-password"
+                        data-input="password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
                     <span class="error"><?php echo htmlspecialchars($passwordErr); ?></span>
                 </div>
 
@@ -762,13 +707,13 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
                     </div>
                     <div class="form-group" style="position: relative;">
                         <input type="password" id="trader-password" name="password" placeholder="Password" required>
-                        <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
-                             data-input="trader-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                        <img src="images/hide.png" alt="Toggle Password" class="toggle-password"
+                            data-input="trader-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
                     </div>
                     <div class="form-group" style="position: relative;">
                         <input type="password" id="trader-confirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
-                        <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
-                             data-input="trader-confirmPassword" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                        <img src="images/hide.png" alt="Toggle Password" class="toggle-password"
+                            data-input="trader-confirmPassword" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
                     </div>
                     <div class="form-group">
                         <input type="text" id="companyName" name="companyName" placeholder="Company name" required>
@@ -805,13 +750,13 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
                     </div><br>
                     <div class="form-group" style="position: relative;">
                         <input type="password" id="customer-password" name="password" placeholder="Password" required>
-                        <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
-                             data-input="customer-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                        <img src="images/hide.png" alt="Toggle Password" class="toggle-password"
+                            data-input="customer-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
                     </div>
                     <div class="form-group" style="position: relative;">
                         <input type="password" id="customer-confirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
-                        <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
-                             data-input="customer-confirmPassword" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                        <img src="images/hide.png" alt="Toggle Password" class="toggle-password"
+                            data-input="customer-confirmPassword" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
                     </div>
                     <button type="submit" class="next-btn">Next</button>
                 </form>
@@ -851,8 +796,8 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
                     </div>
                     <div class="form-group" style="position: relative;">
                         <input type="password" id="mobile-password" name="password" placeholder="Password" required>
-                        <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
-                             data-input="mobile-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                        <img src="images/hide.png" alt="Toggle Password" class="toggle-password"
+                            data-input="mobile-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
                         <span class="error"><?php echo htmlspecialchars($passwordErr); ?></span>
                     </div>
 
@@ -912,13 +857,13 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
                         </div>
                         <div class="form-group" style="position: relative;">
                             <input type="password" id="mobile-trader-password" name="password" placeholder="Password" required>
-                            <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
-                                 data-input="mobile-trader-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                            <img src="images/hide.png" alt="Toggle Password" class="toggle-password"
+                                data-input="mobile-trader-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
                         </div>
                         <div class="form-group" style="position: relative;">
                             <input type="password" id="mobile-trader-confirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
-                            <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
-                                 data-input="mobile-trader-confirmPassword" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                            <img src="images/hide.png" alt="Toggle Password" class="toggle-password"
+                                data-input="mobile-trader-confirmPassword" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
                         </div>
                         <div class="form-group">
                             <input type="text" id="mobile-companyName" name="companyName" placeholder="Company name" required>
@@ -955,13 +900,13 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
                         </div>
                         <div class="form-group" style="position: relative;">
                             <input type="password" id="mobile-customer-password" name="password" placeholder="Password" required>
-                            <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
-                                 data-input="mobile-customer-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                            <img src="images/hide.png" alt="Toggle Password" class="toggle-password"
+                                data-input="mobile-customer-password" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
                         </div>
                         <div class="form-group" style="position: relative;">
                             <input type="password" id="mobile-customer-confirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
-                            <img src="images/hide.png" alt="Toggle Password" class="toggle-password" 
-                                 data-input="mobile-customer-confirmPassword" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
+                            <img src="images/hide.png" alt="Toggle Password" class="toggle-password"
+                                data-input="mobile-customer-confirmPassword" style="position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer;">
                         </div>
                         <button type="submit" class="next-btn">Next</button>
                     </form>
@@ -1000,7 +945,7 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
 
             // Password toggle functionality for all password fields
             document.querySelectorAll('.toggle-password').forEach(toggle => {
-                toggle.addEventListener("click", function () {
+                toggle.addEventListener("click", function() {
                     const inputId = this.getAttribute("data-input");
                     const input = document.getElementById(inputId);
                     const isPassword = input.type === "password";
