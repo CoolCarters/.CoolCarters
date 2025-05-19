@@ -13,13 +13,8 @@ $_SESSION['username'] = 'Username';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CoolCarters Trader Dashboard</title>
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
             --primary: #4e73df;
@@ -35,51 +30,26 @@ $_SESSION['username'] = 'Username';
             background: var(--light);
             color: var(--dark);
             overflow-x: hidden;
+            min-height: 100vh;
+            padding-bottom: 60px; /* Space for footer */
         }
-        /* Sidebar */
-        #sidebar {
-            position: fixed; top: 0; left: 0; bottom: 0;
-            width: 240px; background: var(--dark);
-            padding: 1.5rem 1rem;
-        }
-        #sidebar h2 {
-            color: var(--bg); text-align: center; margin-bottom: 2rem;
-            font-weight: 600;
-        }
-        #sidebar a {
-            display: flex; align-items: center;
-            color: var(--text); text-decoration: none;
-            padding: .75rem; border-radius: .5rem;
-            margin-bottom: .5rem; transition: background .2s, color .2s;
-        }
-        #sidebar a i { width: 20px; margin-right: .75rem; }
-        #sidebar a:hover, #sidebar a.active { background: var(--primary); color: var(--bg); }
-        /* Top nav */
-        #topnav {
-            position: fixed; top: 0; left: 240px; right: 0;
-            height: 60px; background: var(--bg);
-            display: flex; align-items: center;
-            padding: 0 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,.1);
-            z-index: 10;
-        }
-        #topnav #toggleBtn {
-            font-size: 1.4rem; margin-right: 1rem; cursor: pointer;
-            color: var(--text);
-        }
-        #topnav h1 {
-            flex: 1; font-size: 1.2rem; color: var(--dark); font-weight: 500;
-        }
-        #topnav .user {
-            font-size: .9rem; color: var(--text);
-        }
+        
+        /* Main content */
         /* Main content */
         #main {
             margin: 80px 2rem 60px 260px;
+            transition: margin-left 0.3s ease;
+        }
+        #main.expanded {
+            margin-left: 260px;
         }
         .section-header {
-            background: #ccc; padding: .75rem 1rem;
-            font-weight: 500; font-size: 1rem;
+            background: #f8f9fa;
+            padding: .75rem 1rem;
+            font-weight: 500;
+            font-size: 1rem;
+            border-bottom: 1px solid #e3e6f0;
+            color: #4e73df;
         }
         .cards {
             display: grid;
@@ -115,47 +85,57 @@ $_SESSION['username'] = 'Username';
             height: 200px; display: flex; align-items: center; justify-content: center;
         }
         /* Footer */
-        #footer {
-            position: fixed; bottom: 0; left: 240px; right: 0;
-            background: var(--bg); padding: .75rem 2rem;
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 240px;
+            right: 0;
+            background: var(--bg);
+            padding: .75rem 2rem;
             box-shadow: 0 -2px 4px rgba(0,0,0,.05);
-            display: flex; align-items: center; justify-content: space-between;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+            transition: left 0.3s ease;
         }
         .socials a {
-            font-size: 1.2rem; color: var(--text); margin-left: 1rem;
+            font-size: 1.2rem;
+            color: var(--text);
+            margin-left: 1rem;
             transition: color .2s;
         }
-        .socials a:hover { color: var(--primary); }
-        #footer p { font-size: .85rem; color: var(--text); }
+        .socials a:hover {
+            color: var(--primary);
+        }
+        footer p {
+            font-size: .85rem;
+            color: var(--text);
+        }
         /* Responsive */
         @media (max-width: 768px) {
-            #sidebar { width: 0; padding: 0; }
-            #topnav { left: 0; }
-            #main { margin-left: 1rem; }
-            #footer { left: 0; }
+            #main { 
+                margin-left: 1rem;
+                margin-right: 1rem;
+            }
+            #main.expanded {
+                margin-left: 260px;
+            }
             .cards { grid-template-columns: 1fr; }
+            footer { 
+                left: 0;
+            }
+            footer.expanded {
+                left: 240px;
+            }
+            body { padding-bottom: 60px; }
         }
+        
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <nav id="sidebar">
-        <h2>CoolCarters</h2>
-        <a href="trader_dashboard.php" class="active"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
-        <a href="traders_products.php"><i class="fas fa-box"></i>Products</a>
-        <a href="traders_reports.php"><i class="fas fa-chart-bar"></i>Reports</a>
-        <a href="traders_feedbacks.php"><i class="fas fa-comments"></i>Feedbacks</a>
-        <a href="traders_calendar.php"><i class="fas fa-calendar-alt"></i>Calendar</a>
-        <a href="traders_account.php"><i class="fas fa-user-circle"></i>Account</a>
-        <a href="traders_shop.php"><i class="fas fa-store"></i>Shop</a>
-    </nav>
-
-    <!-- Top nav -->
-    <header id="topnav">
-        <div id="toggleBtn"><i class="fas fa-bars"></i></div>
-        <h1>Trader Dashboard</h1>
-        <div class="user"><i class="fas fa-user-circle"></i> <?= $_SESSION['username'] ?></div>
-    </header>
+    <!-- Include the navbar -->
+     <?php include 'navbar.php'; ?>
 
     <!-- Main content -->
     <section id="main">
@@ -211,23 +191,28 @@ $_SESSION['username'] = 'Username';
     </section>
 
     <!-- Footer -->
-    <footer id="footer">
-        <p>Â© 2025 CoolCarter. All rights reserved</p>
+    <footer>
+        <p>&copy; 2025 CoolCarter. All rights reserved</p>
         <div class="socials">
-            <span>Keep us connected:</span>
             <a href="#"><i class="fab fa-instagram"></i></a>
             <a href="#"><i class="fab fa-facebook-f"></i></a>
-            <a href="#"><i class="fa-brands fa-x"></i></a>
+            <a href="#"><i class="fas fa-times"></i></a>
         </div>
     </footer>
 
     <script>
-        document.getElementById('toggleBtn').onclick = () => {
-            document.getElementById('sidebar').classList.toggle('collapsed');
-            document.getElementById('topnav').classList.toggle('expanded');
-            document.getElementById('main').classList.toggle('expanded');
-            document.getElementById('footer').classList.toggle('expanded');
-        };
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('toggleBtn');
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('main');
+            const footer = document.querySelector('footer');
+            
+            toggleBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                main.classList.toggle('expanded');
+                footer.classList.toggle('expanded');
+            });
+        });
     </script>
 </body>
 </html>

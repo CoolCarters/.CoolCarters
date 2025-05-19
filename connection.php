@@ -5,8 +5,8 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 // Oracle connection
-$username = '1234';               // your DB username
-$password = 'coolcarters';               // your DB password
+$username = 'bibash';               // your DB username
+$password = 'bibash';               // your DB password
 $connection_string = 'localhost/XE'; // or use '127.0.0.1/XE'
 
 $conn = oci_connect($username, $password, $connection_string);

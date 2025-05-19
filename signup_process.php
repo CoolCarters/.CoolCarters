@@ -1,48 +1,72 @@
 <?php
-require_once('connection.php');
+session_start();
+require_once 'connection.php';
+require_once 'mailer.php'; // handles sendEmail()
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $role = $_POST["role"];
-    $firstName = $_POST["firstName"];
-    $lastName = $_POST["lastName"];
-    $email = $_POST["email"];
-    $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $role      = trim($_POST["role"]);
+    $firstName = trim($_POST["firstName"]);
+    $lastName  = trim($_POST["lastName"]);
+    $email     = trim($_POST["email"]);
+    $password  = password_hash($_POST["password"], PASSWORD_DEFAULT);
 
+    // 1) Check duplicate email in CUSTOMER_DETAILS + TRADER_DETAILS
+    $sqlCheck = "
+        SELECT COUNT(*) AS CNT
+        FROM (
+            SELECT EMAIL FROM CUSTOMER_DETAILS WHERE EMAIL = :email
+            UNION ALL
+            SELECT EMAIL FROM TRADER_DETAILS WHERE EMAIL = :email
+        )
+    ";
+    $chkStmt = oci_parse($conn, $sqlCheck);
+    oci_bind_by_name($chkStmt, ":email", $email);
+    oci_execute($chkStmt);
+    $row = oci_fetch_assoc($chkStmt);
+    oci_free_statement($chkStmt);
+
+    if ($row['CNT'] > 0) {
+        echo "❌ Error: That email address is already registered.";
+        oci_close($conn);
+        exit;
+    }
+
+    // 2) Generate 6-digit OTP
+    $otp = rand(100000, 999999);
+
+    // 3) Store all signup data in session (to be used in verify_otp.php)
+    $_SESSION['signup'] = [
+        'role'      => $role,
+        'firstName' => $firstName,
+        'lastName'  => $lastName,
+        'email'     => $email,
+        'password'  => $password,
+        'otp'       => $otp
+    ];
+
+    // Additional fields for each role
     if ($role === "customer") {
-        $gender = $_POST["gender"];
-
-        $sql = "INSERT INTO CUSTOMER_DETAILS (FIRST_NAME, LAST_NAME, EMAIL, PASSWORD, GENDER)
-                VALUES (:firstName, :lastName, :email, :password, :gender)";
-        $stmt = oci_parse($conn, $sql);
-
-        oci_bind_by_name($stmt, ":firstName", $firstName);
-        oci_bind_by_name($stmt, ":lastName", $lastName);
-        oci_bind_by_name($stmt, ":email", $email);
-        oci_bind_by_name($stmt, ":password", $password);
-        oci_bind_by_name($stmt, ":gender", $gender);
+        $_SESSION['signup']['gender'] = $_POST["gender"];
     } elseif ($role === "trader") {
-        $companyName = $_POST["companyName"];
-
-        $sql = "INSERT INTO TRADER_DETAILS 
-        (FIRST_NAME, LAST_NAME, EMAIL, PASSWORD, COMPANY_NAME, ACTION)
-        VALUES (:firstName, :lastName, :email, :password, :companyName, 'Pending')";
-
-        $stmt = oci_parse($conn, $sql);
-
-        oci_bind_by_name($stmt, ":firstName", $firstName);
-        oci_bind_by_name($stmt, ":lastName", $lastName);
-        oci_bind_by_name($stmt, ":email", $email);
-        oci_bind_by_name($stmt, ":password", $password);
-        oci_bind_by_name($stmt, ":companyName", $companyName);
-    }
-
-    if (oci_execute($stmt)) {
-        echo "✅ Successfully registered!";
+        $_SESSION['signup']['companyName'] = trim($_POST["companyName"]);
     } else {
-        $e = oci_error($stmt);
-        echo "❌ Error: " . htmlentities($e['message']);
+        echo "❌ Error: Invalid role.";
+        oci_close($conn);
+        exit;
     }
 
-    oci_free_statement($stmt);
+    // 4) Send OTP email
+    $subject = "Your CoolCarters OTP Code";
+    $body = "Hello $firstName,\n\nYour OTP code is: $otp\n\nPlease enter this code to verify your account.\n\n— CoolCarters Team";
+
+    if (sendEmail($email, $subject, $body)) {
+        // Redirect to OTP verification page
+        header("Location: verify_otp.php");
+        exit;
+    } else {
+        echo "❌ Failed to send OTP. Please try again.";
+    }
+
     oci_close($conn);
 }
+?>

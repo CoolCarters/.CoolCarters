@@ -61,7 +61,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $success = true;
             // Clear all fields after successful submission
             $product_name = $price = $min_order = $max_order = $category = $stock = $allergy_warnings = $description = "";
-
+            
             // In a real application, you would save to database here
             // Then redirect or clear the form as we're doing here
         }
@@ -71,14 +71,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>CoolCarters - Add Product</title>
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #4e73df;
@@ -88,106 +82,59 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             --text: #858796;
             --bg: #fff;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Poppins', sans-serif;
             background: var(--light);
             color: var(--dark);
             overflow-x: hidden;
         }
-
         /* Sidebar */
         #sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            width: 240px;
-            background: var(--dark);
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: 240px; background: var(--dark);
             padding: 1.5rem 1rem;
         }
-
         #sidebar h2 {
-            color: var(--bg);
-            text-align: center;
-            margin-bottom: 2rem;
+            color: var(--bg); text-align: center; margin-bottom: 2rem;
             font-weight: 600;
         }
-
         #sidebar a {
-            display: flex;
-            align-items: center;
-            color: var(--text);
-            text-decoration: none;
-            padding: .75rem;
-            border-radius: .5rem;
-            margin-bottom: .5rem;
-            transition: background .2s, color .2s;
+            display: flex; align-items: center;
+            color: var(--text); text-decoration: none;
+            padding: .75rem; border-radius: .5rem;
+            margin-bottom: .5rem; transition: background .2s, color .2s;
         }
-
-        #sidebar a i {
-            width: 20px;
-            margin-right: .75rem;
-        }
-
-        #sidebar a:hover,
-        #sidebar a.active {
-            background: var(--primary);
-            color: var(--bg);
-        }
-
+        #sidebar a i { width: 20px; margin-right: .75rem; }
+        #sidebar a:hover, #sidebar a.active { background: var(--primary); color: var(--bg); }
         /* Top nav */
         #topnav {
-            position: fixed;
-            top: 0;
-            left: 240px;
-            right: 0;
-            height: 60px;
-            background: var(--bg);
-            display: flex;
-            align-items: center;
+            position: fixed; top: 0; left: 240px; right: 0;
+            height: 60px; background: var(--bg);
+            display: flex; align-items: center;
             padding: 0 2rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
             z-index: 10;
         }
-
         #topnav #toggleBtn {
-            font-size: 1.4rem;
-            margin-right: 1rem;
-            cursor: pointer;
+            font-size: 1.4rem; margin-right: 1rem; cursor: pointer;
             color: var(--text);
         }
-
         #topnav h1 {
-            flex: 1;
-            font-size: 1.2rem;
-            color: var(--dark);
-            font-weight: 500;
+            flex: 1; font-size: 1.2rem; color: var(--dark); font-weight: 500;
         }
-
         #topnav .user {
-            font-size: .9rem;
-            color: var(--text);
+            font-size: .9rem; color: var(--text);
         }
-
         /* Main content */
         #main {
             margin: 80px 2rem 60px 260px;
         }
-
         .section-header {
-            background: #ccc;
-            padding: .75rem 1rem;
-            font-weight: 500;
-            font-size: 1rem;
+            background: #ccc; padding: .75rem 1rem;
+            font-weight: 500; font-size: 1rem;
         }
-
+        
         /* Product Form Styles */
         .product-form-container {
             max-width: 800px;
@@ -195,36 +142,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background: var(--bg);
             padding: 2rem;
             border-radius: .75rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, .05);
+            box-shadow: 0 4px 6px rgba(0,0,0,.05);
         }
-
+        
         .form-title {
             font-size: 1.5rem;
             margin-bottom: 1.5rem;
             color: var(--primary);
             text-align: center;
         }
-
+        
         .form-group {
             margin-bottom: 1.25rem;
         }
-
+        
         .form-row {
             display: flex;
             gap: 1.25rem;
         }
-
+        
         .form-col {
             flex: 1;
         }
-
+        
         label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 500;
             color: var(--dark);
         }
-
+        
         input[type="text"],
         input[type="number"],
         textarea,
@@ -236,7 +183,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             font-size: 1rem;
             transition: border-color 0.2s;
         }
-
+        
         input[type="text"]:focus,
         input[type="number"]:focus,
         textarea:focus,
@@ -245,19 +192,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             outline: none;
             box-shadow: 0 0 0 2px rgba(78, 115, 223, 0.25);
         }
-
+        
         textarea {
             min-height: 100px;
             resize: vertical;
         }
-
+        
         .form-actions {
             display: flex;
             justify-content: flex-end;
             gap: 1rem;
             margin-top: 1.5rem;
         }
-
+        
         .btn {
             padding: 0.75rem 1.5rem;
             border-radius: 0.375rem;
@@ -267,31 +214,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             border: none;
             font-weight: 500;
         }
-
+        
         .btn-primary {
             background-color: var(--primary);
             color: white;
         }
-
+        
         .btn-primary:hover {
             background-color: var(--secondary);
         }
-
+        
         .btn-secondary {
             background-color: #6c757d;
             color: white;
         }
-
+        
         .btn-secondary:hover {
             background-color: #5a6268;
         }
-
+        
         .error {
             color: #e74a3b;
             font-size: 0.875rem;
             margin-top: 0.25rem;
         }
-
+        
         .success {
             color: #1cc88a;
             font-size: 0.9rem;
@@ -301,88 +248,61 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background-color: rgba(28, 200, 138, 0.1);
             border-radius: 0.375rem;
         }
-
+        
         /* Footer */
-        #footer {
+        footer {
             position: fixed;
             bottom: 0;
             left: 240px;
             right: 0;
             background: var(--bg);
             padding: .75rem 2rem;
-            box-shadow: 0 -2px 4px rgba(0, 0, 0, .05);
+            box-shadow: 0 -2px 4px rgba(0,0,0,.05);
             display: flex;
             align-items: center;
             justify-content: space-between;
+            z-index: 10;
+            transition: left 0.3s ease;
         }
-
         .socials a {
             font-size: 1.2rem;
             color: var(--text);
             margin-left: 1rem;
             transition: color .2s;
         }
-
         .socials a:hover {
             color: var(--primary);
         }
-
-        #footer p {
+        footer p {
             font-size: .85rem;
             color: var(--text);
         }
-
         /* Responsive */
         @media (max-width: 768px) {
-            #sidebar {
-                width: 0;
-                padding: 0;
-            }
-
-            #topnav {
-                left: 0;
-            }
-
-            #main {
+            #main { 
                 margin-left: 1rem;
+                margin-right: 1rem;
             }
-
-            #footer {
+            #main.expanded {
+                margin-left: 260px;
+            }
+            .cards { grid-template-columns: 1fr; }
+            footer { 
                 left: 0;
             }
-
-            .form-row {
-                flex-direction: column;
-                gap: 0;
+            footer.expanded {
+                left: 240px;
             }
+            body { padding-bottom: 60px; }
         }
     </style>
 </head>
-
 <body>
-    <!-- Sidebar -->
-    <nav id="sidebar">
-        <h2>CoolCarters</h2>
-        <a href="traderInterface.php"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
-        <a href="viewProduct.php" class="active"><i class="fas fa-box"></i>Products</a>
-        <a href="traderReports.php"><i class="fas fa-chart-bar"></i>Reports</a>
-        <a href="traderFeedbacks.php"><i class="fas fa-comments"></i>Feedbacks</a>
-        <a href="traderCalendar.php"><i class="fas fa-calendar-alt"></i>Calendar</a>
-        <a href="traderAccount.php"><i class="fas fa-user-circle"></i>Account</a>
-        <a href="traderShop.php"><i class="fas fa-store"></i>Shop</a>
-    </nav>
-
-    <!-- Top nav -->
-    <header id="topnav">
-        <div id="toggleBtn"><i class="fas fa-bars"></i></div>
-        <h1>Add Product</h1>
-        <div class="user"><i class="fas fa-user-circle"></i> <?= $_SESSION['username'] ?></div>
-    </header>
-
+   <?php include 'navbar.php'; ?>
     <!-- Main content -->
     <section id="main">
         <div class="section-header">Add New Product</div>
-
+        
         <div class="product-form-container">
             <?php if ($success): ?>
                 <div class="success">Product added successfully!</div>
@@ -391,8 +311,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" id="productForm">
                 <div class="form-group">
                     <label for="product_name">Product Name</label>
-                    <input type="text" id="product_name" name="product_name"
-                        value="<?php echo htmlspecialchars($product_name); ?>" required>
+                    <input type="text" id="product_name" name="product_name" 
+                           value="<?php echo htmlspecialchars($product_name); ?>" required>
                     <?php if (isset($errors["product_name"])): ?>
                         <span class="error"><?php echo $errors["product_name"]; ?></span>
                     <?php endif; ?>
@@ -402,8 +322,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <div class="form-col">
                         <div class="form-group">
                             <label for="price">Price</label>
-                            <input type="text" id="price" name="price"
-                                value="<?php echo htmlspecialchars($price); ?>" required>
+                            <input type="text" id="price" name="price" 
+                                   value="<?php echo htmlspecialchars($price); ?>" required>
                             <?php if (isset($errors["price"])): ?>
                                 <span class="error"><?php echo $errors["price"]; ?></span>
                             <?php endif; ?>
@@ -412,8 +332,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <div class="form-col">
                         <div class="form-group">
                             <label for="min_order">Minimum Order</label>
-                            <input type="number" id="min_order" name="min_order"
-                                value="<?php echo htmlspecialchars($min_order); ?>" required>
+                            <input type="number" id="min_order" name="min_order" 
+                                   value="<?php echo htmlspecialchars($min_order); ?>" required>
                             <?php if (isset($errors["min_order"])): ?>
                                 <span class="error"><?php echo $errors["min_order"]; ?></span>
                             <?php endif; ?>
@@ -425,8 +345,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <div class="form-col">
                         <div class="form-group">
                             <label for="max_order">Maximum Order</label>
-                            <input type="number" id="max_order" name="max_order"
-                                value="<?php echo htmlspecialchars($max_order); ?>">
+                            <input type="number" id="max_order" name="max_order" 
+                                   value="<?php echo htmlspecialchars($max_order); ?>">
                             <?php if (isset($errors["max_order"])): ?>
                                 <span class="error"><?php echo $errors["max_order"]; ?></span>
                             <?php endif; ?>
@@ -437,10 +357,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <label for="category">Category</label>
                             <select id="category" name="category">
                                 <option value="">Select Category</option>
-                                <option value="Food" <?php echo ($category === "Food") ? "selected" : ""; ?>>Food</option>
-                                <option value="Beverages" <?php echo ($category === "Beverages") ? "selected" : ""; ?>>Beverages</option>
-                                <option value="Snacks" <?php echo ($category === "Snacks") ? "selected" : ""; ?>>Snacks</option>
-                                <option value="Other" <?php echo ($category === "Other") ? "selected" : ""; ?>>Other</option>
+                                <option value="Meat" <?php echo ($category === "Food") ? "selected" : ""; ?>>Meat</option>
+                                <option value="Grocery" <?php echo ($category === "Beverages") ? "selected" : ""; ?>>Grocery</option>
+                                <option value="Fish" <?php echo ($category === "Snacks") ? "selected" : ""; ?>>Fish</option>
+                                <option value="Bakery" <?php echo ($category === "Other") ? "selected" : ""; ?>>Bakery</option>
+                                <option value="Delicacy" <?php echo ($category === "Other") ? "selected" : ""; ?>>Delicacy</option>
                             </select>
                         </div>
                     </div>
@@ -448,8 +369,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 <div class="form-group">
                     <label for="stock">Stock</label>
-                    <input type="number" id="stock" name="stock"
-                        value="<?php echo htmlspecialchars($stock); ?>">
+                    <input type="number" id="stock" name="stock" 
+                           value="<?php echo htmlspecialchars($stock); ?>">
                     <?php if (isset($errors["stock"])): ?>
                         <span class="error"><?php echo $errors["stock"]; ?></span>
                     <?php endif; ?>
@@ -477,18 +398,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </form>
         </div>
     </section>
-
-    <!-- Footer -->
-    <footer id="footer">
-        <p>© 2025 CoolCarter. All rights reserved</p>
-        <div class="socials">
-            <span>Keep us connected:</span>
-            <a href="#"><i class="fab fa-instagram"></i></a>
-            <a href="#"><i class="fab fa-facebook-f"></i></a>
-            <a href="#"><i class="fa-brands fa-x"></i></a>
-        </div>
-    </footer>
-
     <script>
         // Toggle sidebar
         document.getElementById('toggleBtn').onclick = () => {
@@ -497,14 +406,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             document.getElementById('main').classList.toggle('expanded');
             document.getElementById('footer').classList.toggle('expanded');
         };
-
+        
         // Reset form function
         function resetForm() {
             document.getElementById('productForm').reset();
             // Clear file input (which isn't cleared by standard reset)
             document.getElementById('product_image').value = '';
         }
-
+        
         // If form was successfully submitted, reset it
         <?php if ($success): ?>
             document.addEventListener('DOMContentLoaded', function() {
@@ -512,6 +421,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             });
         <?php endif; ?>
     </script>
-</body>
 
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 CoolCarter. All rights reserved</p>
+        <div class="socials">
+            <a href="#"><i class="fab fa-instagram"></i></a>
+            <a href="#"><i class="fab fa-facebook-f"></i></a>
+            <a href="#"><i class="fas fa-times"></i></a>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('toggleBtn');
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('main');
+            const footer = document.querySelector('footer');
+            
+            toggleBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                main.classList.toggle('expanded');
+                footer.classList.toggle('expanded');
+            });
+        });
+    </script>
+</body>
 </html>

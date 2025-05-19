@@ -1,0 +1,93 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f9f9f9;
+  }
+  
+  .container {
+    display: flex;
+    padding: 40px;
+    gap: 20px;
+  }
+  
+  .left-panel, .right-panel {
+    flex: 1;
+    background: #bdbdbd;
+    border-radius: 25px;
+    padding: 30px;
+    box-sizing: border-box;
+  }
+  
+  .left-panel h2 {
+    margin-top: 0;
+    font-size: 24px;
+  }
+  
+  .support-img {
+    width: 150px;
+    margin-top: 20px;
+  }
+  
+  .right-panel form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .right-panel label {
+    margin: 10px 0 5px;
+  }
+  
+  .right-panel input, .right-panel textarea {
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+  }
+  
+  .right-panel textarea {
+    height: 100px;
+    resize: none;
+  }
+  
+  .self-service {
+    background: #bdbdbd;
+    border-radius: 15px;
+    margin: 20px 40px;
+    padding: 20px;
+  }
+  
+  .self-service h3 {
+    margin: 0 0 10px;
+  }
+  
+  .services {
+    display: flex;
+    gap: 30px;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 10px;
+  }
+  
+  .service {
+    text-align: center;
+  }
+  
+  .service img {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .service a {
+    display: block;
+    margin-top: 5px;
+    color: red;
+    text-decoration: underline;
+  }
+  
+  .contact-details {
+    background: #bdbdbd;
+    border-radius: 20px;
+    padding: 20px 40px;
+    margin: 20px 40px;
+  }
+  

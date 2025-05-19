@@ -1,57 +1,74 @@
 <?php
 session_start();
 
-// Sample product data
+// Static data for demonstration
 $products = [
     [
-        'pid' => 'P001',
-        'name' => 'Premium Hammer',
-        'image' => 'hammer.jpg',
-        'stock' => 45,
-        'price' => 24.99,
-        'discount' => 5
+        'pid' => 1,
+        'product_name' => 'Fresh Chicken Breast',
+        'image_url' => '../images/products/chicken.jpg',
+        'stock' => 100,
+        'price' => 12.99,
+        'category' => 'Meat',
+        'min_order' => 1,
+        'max_order' => 10,
+        'allergy_warnings' => 'None'
     ],
     [
-        'pid' => 'P002',
-        'name' => 'Professional Screwdriver Set',
-        'image' => 'screwdriver.jpg',
-        'stock' => 32,
-        'price' => 39.99,
-        'discount' => 10
+        'pid' => 2,
+        'product_name' => 'Premium Rice 5kg',
+        'image_url' => '../images/products/rice.jpg',
+        'stock' => 150,
+        'price' => 15.99,
+        'category' => 'Grocery',
+        'min_order' => 1,
+        'max_order' => 5,
+        'allergy_warnings' => 'Processed in a facility that handles nuts'
     ],
     [
-        'pid' => 'P003',
-        'name' => 'Heavy Duty Wrench',
-        'image' => 'wrench.jpg',
-        'stock' => 18,
-        'price' => 15.50,
-        'discount' => 0
+        'pid' => 3,
+        'product_name' => 'Fresh Salmon Fillet',
+        'image_url' => '../images/products/salmon.jpg',
+        'stock' => 50,
+        'price' => 18.99,
+        'category' => 'Fish',
+        'min_order' => 1,
+        'max_order' => 8,
+        'allergy_warnings' => 'Contains fish'
     ],
     [
-        'pid' => 'P004',
-        'name' => 'Power Drill',
-        'image' => 'drill.jpg',
-        'stock' => 12,
+        'pid' => 4,
+        'product_name' => 'Artisan Sourdough Bread',
+        'image_url' => '../images/products/bread.jpg',
+        'stock' => 30,
+        'price' => 6.99,
+        'category' => 'Bakery',
+        'min_order' => 1,
+        'max_order' => 5,
+        'allergy_warnings' => 'Contains gluten'
+    ],
+    [
+        'pid' => 5,
+        'product_name' => 'Premium Caviar 50g',
+        'image_url' => '../images/products/caviar.jpg',
+        'stock' => 20,
         'price' => 89.99,
-        'discount' => 15
+        'category' => 'Delicacy',
+        'min_order' => 1,
+        'max_order' => 3,
+        'allergy_warnings' => 'Contains fish roe'
     ]
 ];
 
-$_SESSION['username'] = 'ToolMaster';
+$categories = ['Meat', 'Grocery', 'Fish', 'Bakery', 'Delicacy'];
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>ToolCarters - Products</title>
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
+      :root {
             --primary: #4e73df;
             --secondary: #2e59d9;
             --light: #f8f9fc;
@@ -59,327 +76,211 @@ $_SESSION['username'] = 'ToolMaster';
             --text: #858796;
             --bg: #fff;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Poppins', sans-serif;
             background: var(--light);
             color: var(--dark);
             overflow-x: hidden;
+            min-height: 100vh;
+            padding-bottom: 60px;
         }
-
-        /* Sidebar */
-        #sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            width: 240px;
-            background: var(--dark);
-            padding: 1.5rem 1rem;
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 240px;
+            padding: 5rem 2rem 2rem;
         }
-
-        #sidebar h2 {
-            color: var(--bg);
-            text-align: center;
-            margin-bottom: 2rem;
-            font-weight: 600;
-        }
-
-        #sidebar a {
+        .content-header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            color: var(--text);
-            text-decoration: none;
-            padding: .75rem;
-            border-radius: .5rem;
-            margin-bottom: .5rem;
-            transition: background .2s, color .2s;
+            margin-bottom: 2rem;
         }
-
-        #sidebar a i {
-            width: 20px;
-            margin-right: .75rem;
+        .content-header h1 {
+            font-size: 1.5rem;
+            color: var(--dark);
         }
-
-        #sidebar a:hover,
-        #sidebar a.active {
+        .add-product {
+            padding: 0.5rem 1rem;
             background: var(--primary);
             color: var(--bg);
-        }
-
-        /* Top nav */
-        #topnav {
-            position: fixed;
-            top: 0;
-            left: 240px;
-            right: 0;
-            height: 60px;
-            background: var(--bg);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: 0.3s;
             display: flex;
             align-items: center;
-            padding: 0 2rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
-            z-index: 10;
+            gap: 0.5rem;
+        }
+        .add-product:hover {
+            background: var(--secondary);
         }
 
-        #topnav #toggleBtn {
-            font-size: 1.4rem;
-            margin-right: 1rem;
-            cursor: pointer;
-            color: var(--text);
+        /* Search and Filter */
+        .search-filter {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
         }
-
-        #topnav h1 {
+        .search-bar {
             flex: 1;
-            font-size: 1.2rem;
-            color: var(--dark);
-            font-weight: 500;
-        }
-
-        #topnav .user {
-            font-size: .9rem;
-            color: var(--text);
-        }
-
-        /* Main content */
-        #main {
-            margin: 80px 2rem 60px 260px;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #ccc;
-            padding: .75rem 1rem;
-            font-weight: 500;
-            font-size: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Search and Add Product */
-        .product-actions {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 1.5rem;
-        }
-
-        .search-box {
+            max-width: 300px;
             position: relative;
-            width: 300px;
         }
-
-        .search-box input {
+        .search-bar input {
             width: 100%;
-            padding: 0.5rem 1rem 0.5rem 2.5rem;
+            padding: 0.5rem 1rem;
+            padding-left: 2.5rem;
             border: 1px solid #ddd;
-            border-radius: 0.375rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
         }
-
-        .search-box i {
+        .search-bar i {
             position: absolute;
             left: 1rem;
             top: 50%;
             transform: translateY(-50%);
             color: var(--text);
         }
-
-        .btn {
+        .filter-button {
             padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            font-size: 0.9rem;
+            background: var(--bg);
+            border: 1px solid #ddd;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-            font-weight: 500;
-            text-decoration: none;
-            display: inline-flex;
+            display: flex;
             align-items: center;
             gap: 0.5rem;
-        }
-
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--secondary);
+            font-size: 0.9rem;
         }
 
         /* Products Table */
         .products-table {
             width: 100%;
-            border-collapse: collapse;
             background: var(--bg);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, .05);
-            border-radius: 0.375rem;
+            border-radius: 4px;
             overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-
         .products-table th,
         .products-table td {
             padding: 1rem;
             text-align: left;
             border-bottom: 1px solid #eee;
         }
-
         .products-table th {
-            background-color: #f8f9fa;
-            font-weight: 600;
+            background: var(--light);
+            font-weight: 500;
+            color: var(--dark);
         }
-
-        .products-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .products-table tr:hover {
-            background-color: #f8f9fa;
-        }
-
-        .product-image {
+        .products-table img {
             width: 50px;
             height: 50px;
             object-fit: cover;
             border-radius: 4px;
         }
-
-        .action-btns {
+        .action-buttons {
             display: flex;
             gap: 0.5rem;
         }
-
-        .action-btn {
+        .action-buttons button {
             padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s;
             border: none;
-            font-weight: 500;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.3s;
+            color: var(--bg);
         }
-
-        .edit-btn {
-            background-color: #4e73df;
-            color: white;
-        }
-
-        .delete-btn {
-            background-color: #e74a3b;
-            color: white;
-        }
-
-        .action-btn:hover {
+        .action-buttons button:hover {
             opacity: 0.8;
         }
+        .action-buttons .edit {
+            background: var(--primary);
+        }
+        .action-buttons .delete {
+            background: #dc3545;
+        }
 
-        /* Footer */
-        #footer {
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: 0.3s;
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .top-nav {
+                left: 0;
+            }
+            .search-filter {
+                flex-direction: column;
+            }
+            .search-bar {
+                max-width: 100%;
+            }
+        }
+                /* Footer */
+        footer {
             position: fixed;
             bottom: 0;
             left: 240px;
             right: 0;
             background: var(--bg);
             padding: .75rem 2rem;
-            box-shadow: 0 -2px 4px rgba(0, 0, 0, .05);
+            box-shadow: 0 -2px 4px rgba(0,0,0,.05);
             display: flex;
             align-items: center;
             justify-content: space-between;
+            z-index: 10;
+            transition: left 0.3s ease;
         }
-
         .socials a {
             font-size: 1.2rem;
             color: var(--text);
             margin-left: 1rem;
             transition: color .2s;
         }
-
         .socials a:hover {
             color: var(--primary);
         }
-
-        #footer p {
+        footer p {
             font-size: .85rem;
             color: var(--text);
         }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            #sidebar {
-                width: 0;
-                padding: 0;
-            }
-
-            #topnav {
-                left: 0;
-            }
-
-            #main {
-                margin-left: 1rem;
-            }
-
-            #footer {
-                left: 0;
-            }
-
-            .products-table {
-                display: block;
-                overflow-x: auto;
-            }
-
-            .product-actions {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .search-box {
-                width: 100%;
-            }
-        }
     </style>
 </head>
-
 <body>
-    <!-- Sidebar -->
-    <nav id="sidebar">
-        <h2>ToolCarters</h2>
-        <a href="traderInterface.php"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
-        <a href="viewProduct.php" class="active"><i class="fas fa-box"></i>Products</a>
-        <a href="traderReport.php"><i class="fas fa-chart-bar"></i>Reports</a>
-        <a href="traderFeedback.php"><i class="fas fa-comments"></i>Feedbacks</a>
-        <a href="traderCalendar.php"><i class="fas fa-calendar-alt"></i>Calendar</a>
-        <a href="traderAccount.php"><i class="fas fa-user-circle"></i>Account</a>
-        <a href="traderShop.php"><i class="fas fa-store"></i>Shop</a>
-    </nav>
+    <!-- Include the navbar -->
+     <?php include 'navbar.php'; ?>
 
-    <!-- Top nav -->
-    <header id="topnav">
-        <div id="toggleBtn"><i class="fas fa-bars"></i></div>
-        <h1>Products</h1>
-        <div class="user"><i class="fas fa-user-circle"></i> <?= $_SESSION['username'] ?></div>
-    </header>
-
-    <!-- Main content -->
-    <section id="main">
-        <div class="section-header">
-            <span>Products</span>
-        </div>
-
-        <div class="product-actions">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Search products...">
-            </div>
-            <a href="traderAddProduct.php" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Product
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-header">
+            <h1>Products</h1>
+            <a href="traderAddProduct.php" class="add-product">
+                <i class="fas fa-plus"></i>
+                Add Product
             </a>
         </div>
+
+        <form class="search-filter">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" name="search" placeholder="Search products...">
+            </div>
+            <select name="category" class="filter-button">
+                <option value="">All Category</option>
+                <?php foreach ($categories as $category): ?>
+                    <option value="<?= htmlspecialchars($category) ?>">
+                        <?= htmlspecialchars($category) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </form>
 
         <table class="products-table">
             <thead>
@@ -389,77 +290,110 @@ $_SESSION['username'] = 'ToolMaster';
                     <th>Image</th>
                     <th>Stock</th>
                     <th>Price</th>
-                    <th>Discount</th>
+                    <th>Category</th>
+                    <th>Min Order</th>
+                    <th>Max Order</th>
+                    <th>Allergy Info</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($products as $product): ?>
                     <tr>
-                        <td><?= $product['pid'] ?></td>
-                        <td><?= $product['name'] ?></td>
+                        <td><?= htmlspecialchars($product['pid']) ?></td>
+                        <td><?= htmlspecialchars($product['product_name']) ?></td>
                         <td>
-                            <img src="images/<?= $product['image'] ?>" alt="<?= $product['name'] ?>" class="product-image">
+                            <img src="<?= htmlspecialchars($product['image_url']) ?>" 
+                                 alt="<?= htmlspecialchars($product['product_name']) ?>">
                         </td>
-                        <td><?= $product['stock'] ?></td>
+                        <td><?= htmlspecialchars($product['stock']) ?></td>
                         <td>$<?= number_format($product['price'], 2) ?></td>
-                        <td><?= $product['discount'] ?>%</td>
-                        <td>
-                            <div class="action-btns">
-                                <button class="action-btn edit-btn">
-                                    <i class="fas fa-edit"></i> Edit
-                                </button>
-                                <button class="action-btn delete-btn">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
-                            </div>
+                        <td><?= htmlspecialchars($product['category']) ?></td>
+                        <td><?= htmlspecialchars($product['min_order']) ?></td>
+                        <td><?= htmlspecialchars($product['max_order']) ?></td>
+                        <td><?= htmlspecialchars($product['allergy_warnings']) ?></td>
+                        <td class="action-buttons">
+                            <button class="edit" onclick="editProduct(<?= $product['pid'] ?>)">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete" onclick="deleteProduct(<?= $product['pid'] ?>)">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
-    </section>
-
+    </main>
     <!-- Footer -->
-    <footer id="footer">
-        <div>
-            <a href="#">Home</a> |
-            <a href="#">About Us</a>
-        </div>
+    <footer>
+        <p>&copy; 2025 CoolCarter. All rights reserved</p>
         <div class="socials">
-            <span>To keep us connected</span>
             <a href="#"><i class="fab fa-instagram"></i></a>
             <a href="#"><i class="fab fa-facebook-f"></i></a>
-            <a href="#"><i class="fa-brands fa-x"></i></a>
+            <a href="#"><i class="fas fa-times"></i></a>
         </div>
     </footer>
 
     <script>
-        // Toggle sidebar
-        document.getElementById('toggleBtn').onclick = () => {
-            document.getElementById('sidebar').classList.toggle('collapsed');
-            document.getElementById('topnav').classList.toggle('expanded');
-            document.getElementById('main').classList.toggle('expanded');
-            document.getElementById('footer').classList.toggle('expanded');
-        };
-
-        // Search functionality
-        document.querySelector('.search-box input').addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const rows = document.querySelectorAll('.products-table tbody tr');
-
-            rows.forEach(row => {
-                const productName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-                const pid = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
-
-                if (productName.includes(searchTerm) || pid.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('toggleBtn');
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('main');
+            const footer = document.querySelector('footer');
+            
+            toggleBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                main.classList.toggle('expanded');
+                footer.classList.toggle('expanded');
             });
         });
     </script>
-</body>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('toggleBtn');
+        const sidebar = document.getElementById('sidebar');
+        const main = document.getElementById('main');
+        const footer = document.querySelector('footer');
+        
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            main.classList.toggle('expanded');
+            footer.classList.toggle('expanded');
+        });
 
+        // Search functionality
+        const searchInput = document.querySelector('.search-bar input');
+        const categoryFilter = document.querySelector('select[name="category"]');
+        
+        function filterProducts() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const categoryValue = categoryFilter.value.toLowerCase();
+            
+            document.querySelectorAll('.products-table tbody tr').forEach(row => {
+                const productName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                const productCategory = row.querySelector('td:nth-child(6)').textContent.toLowerCase();
+                
+                const matchesSearch = productName.includes(searchTerm);
+                const matchesCategory = categoryValue === '' || productCategory === categoryValue;
+                
+                row.style.display = (matchesSearch && matchesCategory) ? '' : 'none';
+            });
+        }
+        
+        searchInput.addEventListener('input', filterProducts);
+        categoryFilter.addEventListener('change', filterProducts);
+    });
+
+    function editProduct(productId) {
+        alert('Editing product with ID: ' + productId);
+    }
+
+    function deleteProduct(productId) {
+        if (confirm('Are you sure you want to delete this product?')) {
+            alert('Product with ID ' + productId + ' would be deleted');
+        }
+    }
+</script>
+</body>
 </html>
