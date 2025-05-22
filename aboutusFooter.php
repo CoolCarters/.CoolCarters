@@ -1,12 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>footer</title>
-    <link rel="stylesheet" href="./css/output.css">
-</head>
-<body>
 <footer class="bg-blue-600 text-white py-2">
     <div class="max-w-7xl mx-auto px-4 flex justify-between items-start relative">
         <!-- Company Links - Left aligned -->
@@ -36,5 +27,3 @@
         </div>
     </div>
 </footer>
-</body>
-</html>

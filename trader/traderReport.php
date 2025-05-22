@@ -1,246 +1,258 @@
-
-// Sample data - in a real application, this would come from a database
 <?php
 session_start();
+// require_once '../connection.php';
 
-// Sample report data for trader
-$dailyData = [45, 60, 75, 55, 80, 90, 100]; // Daily sales
-$weeklyData = [350, 420, 380, 400]; // Weekly sales
-$monthlyData = [1500, 1800, 2000, 2200, 2400]; // Monthly sales
+$dailyData = $weeklyData = $monthlyData = $dailyLabels = $weeklyLabels = $monthlyLabels = $topSelling = [];
+
+// if (isset($_SESSION['trader_id'])) {
+//     $trader_id = $_SESSION['trader_id'];
+
+    // Daily Sales
+    $sqlDaily = "SELECT TO_CHAR(P.Payment_Date, 'Dy') AS DayLabel, TO_CHAR(P.Payment_Date, 'YYYY-MM-DD') AS DayDate,
+                        SUM(P.Total_Amount) AS Total
+                 FROM PAYMENT P
+                 JOIN ORDER_TABLE O ON O.Order_ID = P.fk1_Order_ID
+                 JOIN PRODUCT_ORDER PO ON PO.Order_ID = O.Order_ID
+                 JOIN PRODUCT PR ON PR.Product_ID = PO.Product_ID
+                 JOIN SHOP S ON S.Shop_ID = PR.fk1_Shop_ID
+                 WHERE S.Trader_ID = :trader_id AND P.Payment_Date >= TRUNC(SYSDATE - 6)
+                 GROUP BY TO_CHAR(P.Payment_Date, 'Dy'), TO_CHAR(P.Payment_Date, 'YYYY-MM-DD')
+                 ORDER BY TO_CHAR(P.Payment_Date, 'YYYY-MM-DD')";
+    // $stmt = oci_parse($conn, $sqlDaily);
+    // oci_bind_by_name($stmt, ':trader_id', $trader_id);
+    // oci_execute($stmt);
+    // while ($row = oci_fetch_assoc($stmt)) {
+    //     $dailyLabels[] = $row['DAYDATE'];
+    //     $dailyData[] = (float)$row['TOTAL'];
+    // }
+    // oci_free_statement($stmt);
+
+    // Weekly Sales
+    $sqlWeekly = "SELECT 'Week ' || TO_CHAR(P.Payment_Date, 'IW') AS WeekLabel, SUM(P.Total_Amount) AS Total
+                  FROM PAYMENT P
+                  JOIN ORDER_TABLE O ON O.Order_ID = P.fk1_Order_ID
+                  JOIN PRODUCT_ORDER PO ON PO.Order_ID = O.Order_ID
+                  JOIN PRODUCT PR ON PR.Product_ID = PO.Product_ID
+                  JOIN SHOP S ON S.Shop_ID = PR.fk1_Shop_ID
+                  WHERE S.Trader_ID = :trader_id AND P.Payment_Date >= TRUNC(SYSDATE, 'IW') - 28
+                  GROUP BY TO_CHAR(P.Payment_Date, 'IW')
+                  ORDER BY TO_CHAR(P.Payment_Date, 'IW')";
+    // $stmt = oci_parse($conn, $sqlWeekly);
+    // oci_bind_by_name($stmt, ':trader_id', $trader_id);
+    // oci_execute($stmt);
+    // while ($row = oci_fetch_assoc($stmt)) {
+    //     $weeklyLabels[] = $row['WEEKLABEL'];
+    //     $weeklyData[] = (float)$row['TOTAL'];
+    // }
+    // oci_free_statement($stmt);
+
+    // Monthly Sales
+    $sqlMonthly = "SELECT TO_CHAR(P.Payment_Date, 'Month') AS MonthLabel, SUM(P.Total_Amount) AS Total
+                   FROM PAYMENT P
+                   JOIN ORDER_TABLE O ON O.Order_ID = P.fk1_Order_ID
+                   JOIN PRODUCT_ORDER PO ON PO.Order_ID = O.Order_ID
+                   JOIN PRODUCT PR ON PR.Product_ID = PO.Product_ID
+                   JOIN SHOP S ON S.Shop_ID = PR.fk1_Shop_ID
+                   WHERE S.Trader_ID = :trader_id AND P.Payment_Date >= ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -5)
+                   GROUP BY TO_CHAR(P.Payment_Date, 'Month'), TO_CHAR(P.Payment_Date, 'MM')
+                   ORDER BY TO_CHAR(P.Payment_Date, 'MM')";
+    // $stmt = oci_parse($conn, $sqlMonthly);
+    // oci_bind_by_name($stmt, ':trader_id', $trader_id);
+    // oci_execute($stmt);
+    // while ($row = oci_fetch_assoc($stmt)) {
+    //     $monthlyLabels[] = trim($row['MONTHLABEL']);
+    //     $monthlyData[] = (float)$row['TOTAL'];
+    // }
+    // oci_free_statement($stmt);
+
+    // Top Selling Products
+    $sqlTopSelling = "SELECT P.Product_Name, SUM(PO.Quantity) AS Units_Sold
+                      FROM PRODUCT_ORDER PO
+                      JOIN PRODUCT P ON P.Product_ID = PO.Product_ID
+                      JOIN SHOP S ON S.Shop_ID = P.fk1_Shop_ID
+                      WHERE S.Trader_ID = :trader_id
+                      GROUP BY P.Product_Name
+                      ORDER BY Units_Sold DESC FETCH FIRST 5 ROWS ONLY";
+//     $stmt = oci_parse($conn, $sqlTopSelling);
+//     oci_bind_by_name($stmt, ':trader_id', $trader_id);
+//     oci_execute($stmt);
+//     while ($row = oci_fetch_assoc($stmt)) {
+//         $topSelling[] = $row;
+//     }
+//     oci_free_statement($stmt);
+// }
 ?>
-
+<?php include 'navbar.php'; ?>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toggleBtn = document.getElementById('toggleBtn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function () {
+            document.body.classList.toggle('sidebar-collapsed');
+        });
+    }
+});
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
-    <!-- Chart.js -->
+    <title>Sales Reports - CoolCarters</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #4e73df;
-            --secondary: #2e59d9;
-            --light: #f8f9fc;
-            --dark: #343a40;
-            --text: #858796;
-            --bg: #fff;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+        --sidebar-width: 240px;
+        --collapsed-width: 70px;
+    }
+
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f4f6f9;
+        margin: 0;
+        padding-left: var(--sidebar-width);
+        padding-top: 80px;
+        padding-bottom: 80px;
+        transition: padding-left 0.3s ease;
+    }
+
+    body.sidebar-collapsed {
+        padding-left: var(--collapsed-width);
+    }
+
+    main {
+        padding: 1rem;
+        padding-bottom: 5rem;
+    }
+
+    canvas#reportChart {
+        max-width: 100%;
+        height: auto !important;
+    }
+    .socials a {
+        font-size: 1.2rem;
+        color: #858796;
+        margin-left: 1rem;
+        transition: color 0.2s;
+    }
+
+    .socials a:hover {
+        color: #4e73df;
+    }
+
+    @media (max-width: 768px) {
         body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--light);
-            color: var(--dark);
-            overflow-x: hidden;
-            min-height: 100vh;
-            padding-bottom: 60px;
+            padding-left: 0;
+            padding-top: 70px;
         }
-        
-        /* Main content */
-        #main {
-            margin: 80px 2rem 60px 260px;
-            transition: margin-left 0.3s ease;
+
+
+        .flex.gap-4.mb-4 {
+            flex-direction: column;
         }
-        #main.expanded {
-            margin-left: 260px;
-        }
-        .section-header {
-            background: #f8f9fa;
-            padding: .75rem 1rem;
-            font-weight: 500;
-            font-size: 1rem;
-            border-bottom: 1px solid #e3e6f0;
-            color: #4e73df;
-        }
-        .controls {
-            display: flex;
-            gap: 1rem;
-            margin: 1rem 0;
-        }
-        .controls button {
-            padding: 0.5rem 1rem;
-            background: var(--light);
-            border: 1px solid #ddd;
-            border-radius: 0.25rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .controls button.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-        .chart-container {
-            background: var(--bg);
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
-            margin-top: 1rem;
-        }
-        /* Footer */
-        footer {
-            position: fixed;
-            bottom: 0;
-            left: 240px;
-            right: 0;
-            background: var(--bg);
-            padding: .75rem 2rem;
-            box-shadow: 0 -2px 4px rgba(0,0,0,.05);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 10;
-            transition: left 0.3s ease;
-        }
-        .socials a {
-            font-size: 1.2rem;
-            color: var(--text);
-            margin-left: 1rem;
-            transition: color .2s;
-        }
-        .socials a:hover {
-            color: var(--primary);
-        }
-        footer p {
-            font-size: .85rem;
-            color: var(--text);
-        }
-        /* Responsive */
-        @media (max-width: 768px) {
-            #main { 
-                margin-left: 1rem;
-                margin-right: 1rem;
-            }
-            #main.expanded {
-                margin-left: 260px;
-            }
-            .cards { grid-template-columns: 1fr; }
-            footer { 
-                left: 0;
-            }
-            footer.expanded {
-                left: 240px;
-            }
-            body { padding-bottom: 60px; }
-        }
-        
-    </style>
+    }
+</style>
+
 </head>
 <body>
-    <!-- Include the navbar -->
-    <?php include 'navbar.php'; ?>
+<main class="px-4 pb-28">
 
-    <!-- Main content -->
-    <section id="main">
-        <div class="section-header">Sales Reports</div>
-        <div class="controls">
-            <button id="btnDaily" class="active">Daily</button>
-            <button id="btnWeekly">Weekly</button>
-            <button id="btnMonthly">Monthly</button>
+    <h1 class="text-2xl font-semibold text-blue-600 mb-6">Sales Reports</h1>
+
+    <div class="flex gap-4 mb-4">
+        <button id="btnDaily" class="px-4 py-2 bg-blue-600 text-white rounded">Daily</button>
+        <button id="btnWeekly" class="px-4 py-2 bg-gray-300 text-black rounded">Weekly</button>
+        <button id="btnMonthly" class="px-4 py-2 bg-gray-300 text-black rounded">Monthly</button>
+    </div>
+
+    <div class="bg-white p-6 rounded shadow mb-6">
+        <canvas id="reportChart"></canvas>
+    </div>
+
+    <div class="bg-white p-6 rounded shadow">
+        <h2 class="text-lg font-semibold text-gray-700 mb-4">Top Selling Products</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="text-left text-gray-600">
+                    <tr>
+                        <th class="p-2">Product Name</th>
+                        <th class="p-2 text-center">Units Sold</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($topSelling as $item): ?>
+                    <tr class="border-t hover:bg-gray-50">
+                        <td class="p-2"><?= htmlspecialchars($item['PRODUCT_NAME']) ?></td>
+                        <td class="p-2 text-center font-medium text-blue-600"><?= htmlspecialchars($item['UNITS_SOLD']) ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
-        <div class="chart-container">
-            <canvas id="reportChart"></canvas>
-        </div>
-    </section>
+    </div>
+</main>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Data from PHP
-            const dailyData = <?= json_encode($dailyData); ?>;
-            const weeklyData = <?= json_encode($weeklyData); ?>;
-            const monthlyData = <?= json_encode($monthlyData); ?>;
-            
-            // Chart setup
-            const ctx = document.getElementById('reportChart').getContext('2d');
-            let chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    datasets: [{
-                        label: 'Daily Sales',
-                        data: dailyData,
-                        borderColor: 'var(--primary)',
-                        backgroundColor: 'rgba(78, 115, 223, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
+<?php include 'traderFooter.php'; ?>
 
-            // Toggle button functionality
-            document.getElementById('btnDaily').addEventListener('click', function() {
-                updateChart('Daily', dailyData, ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 0);
-                setActiveButton(this);
-            });
-            
-            document.getElementById('btnWeekly').addEventListener('click', function() {
-                updateChart('Weekly', weeklyData, ['Week 1', 'Week 2', 'Week 3', 'Week 4'], 1);
-                setActiveButton(this);
-            });
-            
-            document.getElementById('btnMonthly').addEventListener('click', function() {
-                updateChart('Monthly', monthlyData, ['Jan', 'Feb', 'Mar', 'Apr', 'May'], 2);
-                setActiveButton(this);
-            });
+<script>
+    const dailyData = <?= json_encode($dailyData) ?>;
+    const dailyLabels = <?= json_encode($dailyLabels) ?>;
+    const weeklyData = <?= json_encode($weeklyData) ?>;
+    const weeklyLabels = <?= json_encode($weeklyLabels) ?>;
+    const monthlyData = <?= json_encode($monthlyData) ?>;
+    const monthlyLabels = <?= json_encode($monthlyLabels) ?>;
 
-            function updateChart(label, data, labels, idx) {
-                chart.data.labels = labels;
-                chart.data.datasets[0].label = label + ' Sales';
-                chart.data.datasets[0].data = data;
-                chart.update();
+    const ctx = document.getElementById('reportChart').getContext('2d');
+    let chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dailyLabels,
+            datasets: [{
+                label: 'Daily Sales',
+                data: dailyData,
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true }
             }
+        }
+    });
 
-            function setActiveButton(activeBtn) {
-                document.querySelectorAll('.controls button').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                activeBtn.classList.add('active');
-            }
+    function updateChart(label, labels, data) {
+        chart.data.labels = labels;
+        chart.data.datasets[0].label = label;
+        chart.data.datasets[0].data = data;
+        chart.update();
+    }
 
-            // Sidebar toggle functionality
-            const toggleBtn = document.getElementById('toggleBtn');
-            const sidebar = document.getElementById('sidebar');
-            const main = document.getElementById('main');
-            const footer = document.querySelector('footer');
-            
-            toggleBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('collapsed');
-                main.classList.toggle('expanded');
-                footer.classList.toggle('expanded');
-            });
-        });
-    </script>
-        <!-- Footer -->
-    <footer>
-        <p>&copy; 2025 CoolCarter. All rights reserved</p>
-        <div class="socials">
-            <a href="#"><i class="fab fa-instagram"></i></a>
-            <a href="#"><i class="fab fa-facebook-f"></i></a>
-            <a href="#"><i class="fas fa-times"></i></a>
-        </div>
-    </footer>
+    function setActive(activeId) {
+        document.querySelectorAll('button').forEach(btn => btn.className = 'px-4 py-2 bg-gray-300 text-black rounded');
+        document.getElementById(activeId).className = 'px-4 py-2 bg-blue-600 text-white rounded';
+    }
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const toggleBtn = document.getElementById('toggleBtn');
-            const sidebar = document.getElementById('sidebar');
-            const main = document.getElementById('main');
-            const footer = document.querySelector('footer');
-            
-            toggleBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('collapsed');
-                main.classList.toggle('expanded');
-                footer.classList.toggle('expanded');
-            });
-        });
-    </script>
+    document.getElementById('btnDaily').addEventListener('click', () => {
+        updateChart('Daily Sales', dailyLabels, dailyData);
+        setActive('btnDaily');
+    });
+
+    document.getElementById('btnWeekly').addEventListener('click', () => {
+        updateChart('Weekly Sales', weeklyLabels, weeklyData);
+        setActive('btnWeekly');
+    });
+
+    document.getElementById('btnMonthly').addEventListener('click', () => {
+        updateChart('Monthly Sales', monthlyLabels, monthlyData);
+        setActive('btnMonthly');
+    });
+</script>
+
 </body>
 </html>

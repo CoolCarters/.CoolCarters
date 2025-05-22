@@ -1,64 +1,102 @@
 <?php
 session_start();
+require_once 'connection.php';
 
-// Form processing logic
-function test_input($data)
-{
-    $data = trim($data);
-    $data = stripslashes($data);
-    $data = htmlspecialchars($data);
-    return $data;
+function test_input($data) {
+    return htmlspecialchars(stripslashes(trim($data)));
 }
 
-$email = isset($_SESSION['email']) ? $_SESSION['email'] : '';
-$role = isset($_SESSION['role']) ? $_SESSION['role'] : '';
-$emailErr = isset($_SESSION['emailErr']) ? $_SESSION['emailErr'] : '';
-$passwordErr = isset($_SESSION['passwordErr']) ? $_SESSION['passwordErr'] : '';
-$roleErr = isset($_SESSION['roleErr']) ? $_SESSION['roleErr'] : '';
-$successMsg = isset($_SESSION['successMsg']) ? $_SESSION['successMsg'] : '';
+$email = $password = $role = '';
+$emailErr = $passwordErr = $roleErr = '';
+$statusErr = '';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $emailErr = $passwordErr = $roleErr = "";
-    $email = $password = $role = "";
-    $successMsg = "";
-
-    if (empty($_POST["email"])) {
-        $emailErr = "Email is required";
+// Handle form POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // email validation
+    if (empty($_POST['email'])) {
+        $emailErr = 'Email is required';
     } else {
-        $email = test_input($_POST["email"]);
+        $email = test_input($_POST['email']);
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $emailErr = "Invalid email format";
+            $emailErr = 'Invalid email format';
         }
     }
-
-    if (empty($_POST["password"])) {
-        $passwordErr = "Password is required";
+    // password validation
+    if (empty($_POST['password'])) {
+        $passwordErr = 'Password is required';
     } else {
-        $password = test_input($_POST["password"]);
+        $password = test_input($_POST['password']);
     }
-
-    if (empty($_POST["role"])) {
-        $roleErr = "Role is required";
+    // role validation
+    if (empty($_POST['role'])) {
+        $roleErr = 'Role is required';
     } else {
-        $role = test_input($_POST["role"]);
+        $role = ucfirst(strtolower(test_input($_POST['role'])));
     }
 
-    if (empty($emailErr) && empty($passwordErr) && empty($roleErr)) {
-        $successMsg = "Login successful! Redirecting...";
-    }
+    // Authenticate if no validation errors
+    if (!$emailErr && !$passwordErr && !$roleErr) {
+        $sql = "SELECT * FROM USER_TABLE WHERE EMAIL = :email AND ROLE = :role";
+        $stmt = oci_parse($conn, $sql);
+        oci_bind_by_name($stmt, ':email', $email);
+        oci_bind_by_name($stmt, ':role', $role);
+        oci_execute($stmt);
+        $row = oci_fetch_assoc($stmt);
 
-    // Store variables in session
-    $_SESSION['email'] = $email;
-    $_SESSION['role'] = $role;
-    $_SESSION['emailErr'] = $emailErr;
-    $_SESSION['passwordErr'] = $passwordErr;
-    $_SESSION['roleErr'] = $roleErr;
-    $_SESSION['successMsg'] = $successMsg;
+        if ($row && password_verify($password, $row['PASSWORD'])) {
+            // If Trader, check status and fetch details
+            if ($role === 'Trader') {
+                $traderStatusSql = "SELECT STATUS, COMPANY_NAME FROM TRADER WHERE USER_ID = :uidval";
+                $statusStmt = oci_parse($conn, $traderStatusSql);
+                oci_bind_by_name($statusStmt, ':uidval', $row['USER_ID']);
+                oci_execute($statusStmt);
+                $statusRow = oci_fetch_assoc($statusStmt);
+
+                $traderStatus = $statusRow['STATUS'] ?? 'Pending';
+
+                if ($traderStatus === 'Pending') {
+                    $passwordErr = 'Your account is still under review (Pending).';
+                } elseif ($traderStatus === 'Denied') {
+                    $passwordErr = 'Your account has been denied by the admin.';
+                } elseif ($traderStatus === 'Approved') {
+                    // Set all trader session data
+                    $_SESSION['user_email']  = $email;
+                    $_SESSION['role']        = strtolower($role);
+                    $_SESSION['user_id']     = $row['USER_ID'];
+                    $_SESSION['trader_id']   = $row['USER_ID'];
+                    $_SESSION['full_name']   = $row['FIRST_NAME'] . ' ' . $row['LAST_NAME'];
+                    $_SESSION['company_name'] = $statusRow['COMPANY_NAME'];
+                    header('Location: trader/traderInterface.php');
+                    exit;
+                } else {
+                    $passwordErr = 'Unknown account status. Contact support.';
+                }
+            }
+            // Customer or Admin login
+            else {
+                $_SESSION['user_email']    = $email;
+                $_SESSION['role']          = strtolower($role);
+                $_SESSION['user_id']       = $row['USER_ID'];
+                $_SESSION['customer_name'] = $row['FIRST_NAME'] . ' ' . $row['LAST_NAME'];
+
+                if ($role === 'Customer') {
+                    header('Location: index.php');
+                    exit;
+                } elseif ($role === 'Admin') {
+                    header('Location: admin/dashboard.php');
+                    exit;
+                } else {
+                    header('Location: index.php');
+                    exit;
+                }
+            }
+        } else {
+            $passwordErr = 'Invalid email or password';
+        }
+    }
 }
-
-// Clear session variables after processing
-unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['passwordErr'], $_SESSION['roleErr'], $_SESSION['successMsg']);
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -73,7 +111,7 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
 
 <body>
     <?php
-    include "homeNavbar.php";
+    include "loginNavbar.php";
     ?>
     <div class="main-content">
         <section class="login-form">
@@ -161,7 +199,7 @@ unset($_SESSION['email'], $_SESSION['role'], $_SESSION['emailErr'], $_SESSION['p
                         <input type="text" id="companyName" name="companyName" placeholder="Company name" required>
                     </div>
                     <button type="submit" class="next-btn">Next</button>
-                    
+
                 </form>
             </div>
 

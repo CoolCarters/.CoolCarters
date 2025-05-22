@@ -1,20 +1,16 @@
 <?php
-// Enable error reporting (for development)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// connection.php — universal Oracle DB connection for CoolCarters
 
-// Oracle connection
-$username = 'bibash';               // your DB username
-$password = 'bibash';               // your DB password
-$connection_string = 'localhost/XE'; // or use '127.0.0.1/XE'
+if (!isset($GLOBALS['conn']) || !$GLOBALS['conn']) {
+    $db_user = '1234';        // Change to your DB user
+    $db_pass = 'coolcarters';        // Change to your DB password
+    $db_host = 'localhost/XE';  // XE, or 'host:port/servicename'
 
-$conn = oci_connect($username, $password, $connection_string);
-
-if (!$conn) {
-    $e = oci_error();
-    die("❌ Oracle connection error: " . htmlentities($e['message']));
-} else {
-    // Optional: confirm connection (comment in production)
-    echo "✅ Connected to Oracle!";
+    $conn = oci_connect($db_user, $db_pass, $db_host, 'AL32UTF8');
+    if (!$conn) {
+        $e = oci_error();
+        die("<b>❌ DB connection failed:</b> " . htmlspecialchars($e['message']));
+    }
+    $GLOBALS['conn'] = $conn;
 }
+?>

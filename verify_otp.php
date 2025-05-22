@@ -17,36 +17,62 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     ]));
 
     if ($otpEntered === (string)$signup['otp']) {
-        // Insert into Oracle DB
-        $stmt = null;
-        if ($signup['role'] === "customer") {
-            $sql = "
-              INSERT INTO CUSTOMER_DETAILS (FIRST_NAME, LAST_NAME, EMAIL, PASSWORD, GENDER)
-              VALUES (:firstName, :lastName, :email, :password, :gender)";
-            $stmt = oci_parse($conn, $sql);
-            oci_bind_by_name($stmt, ":firstName", $signup['firstName']);
-            oci_bind_by_name($stmt, ":lastName",  $signup['lastName']);
-            oci_bind_by_name($stmt, ":email",     $signup['email']);
-            oci_bind_by_name($stmt, ":password",  $signup['password']);
-            oci_bind_by_name($stmt, ":gender",    $signup['gender']);
+        $gender = ucfirst(strtolower(trim($signup['gender'] ?? 'Other')));
+        $role = ucfirst(strtolower(trim($signup['role'] ?? '')));
+        $user_id = null;
 
-        } elseif ($signup['role'] === "trader") {
-            $sql = "
-              INSERT INTO TRADER_DETAILS (FIRST_NAME, LAST_NAME, EMAIL, PASSWORD, COMPANY_NAME)
-              VALUES (:firstName, :lastName, :email, :password, :companyName)";
-            $stmt = oci_parse($conn, $sql);
-            oci_bind_by_name($stmt, ":firstName",    $signup['firstName']);
-            oci_bind_by_name($stmt, ":lastName",     $signup['lastName']);
-            oci_bind_by_name($stmt, ":email",        $signup['email']);
-            oci_bind_by_name($stmt, ":password",     $signup['password']);
-            oci_bind_by_name($stmt, ":companyName",  $signup['companyName']);
-        }
+        // Step 1: Insert into USER_TABLE
+        $sql_user = "
+            INSERT INTO USER_TABLE (
+                First_Name, Last_Name, Gender, Email, Password, Phone_Number, Address, Role, CreatedAt, UpdatedAt
+            ) VALUES (
+                :firstName, :lastName, :gender, :email, :password, :phone, :address, :role, SYSTIMESTAMP, SYSTIMESTAMP
+            )
+            RETURNING User_ID INTO :user_id
+        ";
+        $stmt_user = oci_parse($conn, $sql_user);
+        oci_bind_by_name($stmt_user, ":firstName", $signup['firstName']);
+        oci_bind_by_name($stmt_user, ":lastName", $signup['lastName']);
+        oci_bind_by_name($stmt_user, ":gender", $gender);
+        oci_bind_by_name($stmt_user, ":email", $signup['email']);
+        oci_bind_by_name($stmt_user, ":password", $signup['password']);
+        oci_bind_by_name($stmt_user, ":phone", $signup['phone']);
+        oci_bind_by_name($stmt_user, ":address", $signup['address']);
+        oci_bind_by_name($stmt_user, ":role", $role);
+        oci_bind_by_name($stmt_user, ":user_id", $user_id, -1, OCI_B_INT);
 
-        if ($stmt && oci_execute($stmt, OCI_COMMIT_ON_SUCCESS)) {
-            unset($_SESSION['signup']);
-            echo "✅ Registration complete. You can now <a href='login.php'>log in</a>.";
+        if (oci_execute($stmt_user)) {
+            // Step 2: Insert into Subtype table
+            if ($role === "Customer") {
+                $sql_cust = "INSERT INTO CUSTOMER (User_ID, Loyalty_Points) VALUES (:user_id, 0)";
+                $stmt_cust = oci_parse($conn, $sql_cust);
+                oci_bind_by_name($stmt_cust, ":user_id", $user_id);
+
+                if (oci_execute($stmt_cust)) {
+                    unset($_SESSION['signup']);
+                    header("Location: login.php");
+                    exit;
+                } else {
+                    $e = oci_error($stmt_cust);
+                    $error = "❌ Error inserting customer: " . htmlentities($e['message']);
+                }
+            } elseif ($role === "Trader") {
+                $sql_trader = "INSERT INTO TRADER (User_ID, Company_Name) VALUES (:user_id, :companyName)";
+                $stmt_trader = oci_parse($conn, $sql_trader);
+                oci_bind_by_name($stmt_trader, ":user_id", $user_id);
+                oci_bind_by_name($stmt_trader, ":companyName", $signup['companyName']);
+
+                if (oci_execute($stmt_trader)) {
+                    unset($_SESSION['signup']);
+                    header("Location: login.php");
+                    exit;
+                } else {
+                    $e = oci_error($stmt_trader);
+                    $error = "❌ Error inserting trader: " . htmlentities($e['message']);
+                }
+            }
         } else {
-            $e = oci_error($stmt);
+            $e = oci_error($stmt_user);
             $error = "❌ Error inserting user: " . htmlentities($e['message']);
         }
     } else {
@@ -54,6 +80,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 ?>
+
 
 <!-- OTP Form -->
 <!DOCTYPE html>

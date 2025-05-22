@@ -1,22 +1,44 @@
 <?php
-// traderCalendar.php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+if (session_status() === PHP_SESSION_NONE) session_start();
+
+// require_once '../connection.php';
+
+// $trader_id = $_SESSION['trader_id'] ?? 0;
+$slots = [];
+
+if ($trader_id) {
+    $sql = "
+        SELECT cs.Slot_Date, cs.Slot_Time
+        FROM COLLECTION_SLOT cs
+        INNER JOIN ORDER_TABLE o ON o.fk1_Slot_ID = cs.Slot_ID
+        INNER JOIN SHOP s ON s.Trader_ID = :trader_id
+        INNER JOIN PRODUCT p ON p.fk1_Shop_ID = s.Shop_ID
+        INNER JOIN PRODUCT_ORDER po ON po.Product_ID = p.Product_ID AND po.Order_ID = o.Order_ID
+        WHERE ROWNUM <= 100
+    ";
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":trader_id", $trader_id);
+    oci_execute($stmt);
+
+    while ($row = oci_fetch_assoc($stmt)) {
+        $dateKey = $row['SLOT_DATE'];
+        $slots[$dateKey][] = $row['SLOT_TIME'];
+    }
+    oci_free_statement($stmt);
 }
 
-// Determine month and year from query params or default to current
-$year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
-$month = isset($_GET['month']) ? intval($_GET['month']) : date('n');
-// Normalize month/year
+$year = $_GET['year'] ?? date('Y');
+$month = $_GET['month'] ?? date('n');
+$year = (int)$year;
+$month = (int)$month;
+
 if ($month < 1) { $month = 12; $year--; }
 if ($month > 12) { $month = 1; $year++; }
 
-// Calendar calculations
 $firstDayOfMonth = mktime(0, 0, 0, $month, 1, $year);
 $daysInMonth = date('t', $firstDayOfMonth);
-$startDay = date('w', $firstDayOfMonth); // 0 (Sun) - 6 (Sat)
+$startDay = date('w', $firstDayOfMonth);
 
-// Prev/next month links
 $prevMonth = $month - 1;
 $prevYear = $year;
 if ($prevMonth < 1) { $prevMonth = 12; $prevYear--; }
@@ -24,244 +46,186 @@ $nextMonth = $month + 1;
 $nextYear = $year;
 if ($nextMonth > 12) { $nextMonth = 1; $nextYear++; }
 
-// Month names
 $monthName = date('F', $firstDayOfMonth);
 ?>
+<?php include 'navbar.php'; ?>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toggleBtn = document.getElementById('toggleBtn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function () {
+            document.body.classList.toggle('sidebar-collapsed');
+        });
+    }
+});
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <style>
-        :root {
-            --primary: #4e73df;
-            --secondary: #2e59d9;
-            --light: #f8f9fc;
-            --dark: #343a40;
-            --text: #858796;
-            --bg: #fff;
-        }
-        
-        /* Main content area */
-        #main {
-            margin: 80px 2rem 60px 260px;
-            transition: margin-left 0.3s ease;
-        }
-        #main.expanded {
-            margin-left: 260px;
-        }
-        
-        /* Calendar styles */
-        .calendar-container {
-            background: var(--bg);
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            padding: 1.5rem;
-        }
-        .calendar-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-        .calendar-nav a {
-            color: var(--primary);
-            text-decoration: none;
-            font-size: 1.2rem;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            transition: background-color 0.2s;
-        }
-        .calendar-nav a:hover {
-            background-color: rgba(78, 115, 223, 0.1);
-        }
-        .calendar-nav .title {
-            font-size: 1.5rem;
-            font-weight: 500;
-            color: var(--dark);
-        }
-        .calendar {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .calendar th {
-            background: var(--primary);
-            color: white;
-            padding: 0.75rem;
-            text-align: center;
-            font-weight: 500;
-        }
-        .calendar td {
-            border: 1px solid #e0e0e0;
-            height: 100px;
-            vertical-align: top;
-            padding: 0.5rem;
-            background: var(--bg);
-        }
-        .calendar td:hover {
-            background-color: #f9f9f9;
-        }
-        .day-number {
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-        .today {
-            background-color: #e6f7ff !important;
-            position: relative;
-        }
-        .today .day-number:after {
-            content: '';
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            width: 8px;
-            height: 8px;
-            background-color: var(--primary);
-            border-radius: 50%;
-        }
-        
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            #main {
-                margin: 80px 1rem 60px 1rem;
-            }
-            #main.expanded {
-                margin-left: 240px;
-            }
-            .calendar td {
-                height: 70px;
-                font-size: 0.9rem;
-            }
-        }
-                /* Footer */
-        footer {
-            position: fixed;
-            bottom: 0;
-            left: 240px;
-            right: 0;
-            background: var(--bg);
-            padding: .75rem 2rem;
-            box-shadow: 0 -2px 4px rgba(0,0,0,.05);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 10;
-            transition: left 0.3s ease;
-        }
-        .socials a {
-            font-size: 1.2rem;
-            color: var(--text);
-            margin-left: 1rem;
-            transition: color .2s;
-        }
-        .socials a:hover {
-            color: var(--primary);
-        }
-        footer p {
-            font-size: .85rem;
-            color: var(--text);
-        }
-        /* Responsive */
-        @media (max-width: 768px) {
-            #main { 
-                margin-left: 1rem;
-                margin-right: 1rem;
-            }
-            #main.expanded {
-                margin-left: 260px;
-            }
-            .cards { grid-template-columns: 1fr; }
-            footer { 
-                left: 0;
-            }
-            footer.expanded {
-                left: 240px;
-            }
-            body { padding-bottom: 60px; }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Trader Calendar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --primary: #4e73df;
+      --secondary: #2e59d9;
+      --light: #f8f9fc;
+      --dark: #343a40;
+      --text: #858796;
+      --bg: #fff;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--light);
+      color: var(--dark);
+      margin: 0;
+      padding: 0;
+    }
+    main#main {
+      margin-left: 240px;
+      padding: 80px 1rem 100px 1rem;
+      transition: margin-left 0.3s ease;
+    }
+    body.sidebar-collapsed main#main {
+      margin-left: 70px;
+    }
+    .calendar-container {
+      background: var(--bg);
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .calendar-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .calendar-nav a {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 1.2rem;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      background-color: #eef2ff;
+    }
+    .calendar-nav .title {
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: var(--dark);
+    }
+    .calendar {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .calendar th,
+    .calendar td {
+      padding: 0.75rem;
+      text-align: center;
+      border: 1px solid #e0e0e0;
+      height: 100px;
+      vertical-align: top;
+      background: var(--bg);
+    }
+    .calendar th {
+      background: var(--primary);
+      color: white;
+    }
+    .today {
+      background-color: #e6f7ff !important;
+      position: relative;
+    }
+    .today .day-number::after {
+      content: '';
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      width: 8px;
+      height: 8px;
+      background-color: var(--primary);
+      border-radius: 50%;
+    }
+    .slots {
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+      color: var(--text);
+      text-align: left;
+    }
+    @media (max-width: 768px) {
+      main#main {
+        margin-left: 0;
+        padding: 70px 1rem 100px 1rem;
+      }
+      .calendar th,
+      .calendar td {
+        font-size: 0.7rem;
+        padding: 0.5rem;
+        height: 80px;
+      }
+      .calendar-nav {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .calendar-nav .title {
+        font-size: 1.25rem;
+      }
+    }
+  </style>
 </head>
 <body>
-    <?php include 'navbar.php'; ?>
-
-    <!-- Main content -->
-    <main id="main">
-        <div class="calendar-container">
-            <h1>Trader Calendar</h1>
-            
-            <div class="calendar-nav">
-                <a href="?month=<?= $prevMonth ?>&year=<?= $prevYear ?>">
-                    <i class="fas fa-chevron-left"></i> Previous
-                </a>
-                <span class="title"><?= "$monthName $year" ?></span>
-                <a href="?month=<?= $nextMonth ?>&year=<?= $nextYear ?>">
-                    Next <i class="fas fa-chevron-right"></i>
-                </a>
-            </div>
-            
-            <!-- Calendar -->
-            <table class="calendar">
-                <thead>
-                    <tr>
-                        <th>Sun</th>
-                        <th>Mon</th>
-                        <th>Tue</th>
-                        <th>Wed</th>
-                        <th>Thu</th>
-                        <th>Fri</th>
-                        <th>Sat</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $day = 1;
-                    for ($row = 0; $row < 6; $row++) {
-                        echo '<tr>';
-                        for ($col = 0; $col < 7; $col++) {
-                            if ($row === 0 && $col < $startDay) {
-                                echo '<td></td>';
-                            } elseif ($day > $daysInMonth) {
-                                echo '<td></td>';
-                            } else {
-                                $date = sprintf('%04d-%02d-%02d', $year, $month, $day);
-                                $todayClass = ($date == date('Y-m-d')) ? 'today' : '';
-                                echo "<td class='$todayClass'>";
-                                echo "<div class='day-number'>$day</div>";
-                                echo '</td>';
-                                $day++;
-                            }
-                        }
-                        echo '</tr>';
-                        if ($day > $daysInMonth) break;
-                    }
-                    ?>
-                </tbody>
-            </table>
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2025 CoolCarter. All rights reserved</p>
-        <div class="socials">
-            <a href="#"><i class="fab fa-instagram"></i></a>
-            <a href="#"><i class="fab fa-facebook-f"></i></a>
-            <a href="#"><i class="fas fa-times"></i></a>
-        </div>
-    </footer>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const toggleBtn = document.getElementById('toggleBtn');
-            const sidebar = document.getElementById('sidebar');
-            const main = document.getElementById('main');
-            const footer = document.querySelector('footer');
-            
-            toggleBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('collapsed');
-                main.classList.toggle('expanded');
-                footer.classList.toggle('expanded');
-            });
-        });
-    </script>
+<main id="main">
+  <div class="calendar-container">
+    <div class="calendar-nav">
+      <a href="?month=<?= $prevMonth ?>&year=<?= $prevYear ?>"><i class="fas fa-chevron-left"></i> Previous</a>
+      <span class="title"><?= "$monthName $year" ?></span>
+      <a href="?month=<?= $nextMonth ?>&year=<?= $nextYear ?>">Next <i class="fas fa-chevron-right"></i></a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="calendar">
+        <thead>
+          <tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr>
+        </thead>
+        <tbody>
+          <?php
+          $day = 1;
+          for ($row = 0; $row < 6; $row++) {
+              echo '<tr>';
+              for ($col = 0; $col < 7; $col++) {
+                  if ($row === 0 && $col < $startDay) {
+                      echo '<td></td>';
+                  } elseif ($day > $daysInMonth) {
+                      echo '<td></td>';
+                  } else {
+                      $dateStr = sprintf('%04d-%02d-%02d', $year, $month, $day);
+                      $timestamp = strtotime($dateStr);
+                      $todayClass = ($dateStr == date('Y-m-d')) ? 'today' : '';
+                      $isValidSlotDay = $timestamp >= strtotime('+1 day') && in_array(date('w', $timestamp), [3, 4, 5]);
+                      echo "<td class='$todayClass'>";
+                      echo "<div class='day-number'>$day</div>";
+                      if ($isValidSlotDay) {
+                          if (isset($slots[$dateStr])) {
+                              echo "<div class='slots text-green-700 font-medium'>" . implode('<br>', $slots[$dateStr]) . "</div>";
+                          } else {
+                              echo "<div class='slots text-green-600 text-xs'>Valid Pickup Day</div>";
+                          }
+                      } else {
+                          echo "<div class='slots text-red-400 text-xs italic'>Unavailable</div>";
+                      }
+                      echo "</td>";
+                      $day++;
+                  }
+              }
+              echo '</tr>';
+              if ($day > $daysInMonth) break;
+          }
+          ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+<?php include 'traderFooter.php'; ?>
 </body>
 </html>

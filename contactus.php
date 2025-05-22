@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contact Us</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-
 <body class="bg-gray-100 font-sans m-0 p-0">
   <?php include "homeNavbar.php"; ?>
 
@@ -52,19 +50,19 @@
     <div class="flex gap-8 flex-wrap items-center mt-2">
       <div class="text-center">
         <img src="https://img.icons8.com/ios-filled/50/box.png" class="w-10 h-10 mx-auto" />
-        <a href="#" class="text-red-600 underline mt-1 block">My orders</a>
+        <a href="javascript:void(0);" onclick="openModal('my_Orders.php')" class="text-red-600 underline mt-1 block">My orders</a>
       </div>
       <div class="text-center">
         <img src="https://img.icons8.com/ios-filled/50/user-male-circle.png" class="w-10 h-10 mx-auto" />
-        <a href="#" class="text-red-600 underline mt-1 block">My profile</a>
+        <a href="./customer/customer_profile.php" class="text-red-600 underline mt-1 block">My profile</a>
       </div>
       <div class="text-center">
         <img src="https://img.icons8.com/ios-filled/50/cancel.png" class="w-10 h-10 mx-auto" />
-        <a href="#" class="text-red-600 underline mt-1 block">Orders cancelled</a>
+        <a href="javascript:void(0);" onclick="openModal('ordersCancelled.php')" class="text-red-600 underline mt-1 block">Orders cancelled</a>
       </div>
       <div class="text-center">
         <img src="https://img.icons8.com/ios-filled/50/return.png" class="w-10 h-10 mx-auto" />
-        <a href="#" class="text-red-600 underline mt-1 block">Returned package</a>
+        <a href="javascript:void(0);" onclick="openModal('packageReturned.php')" class="text-red-600 underline mt-1 block">Returned package</a>
       </div>
     </div>
   </div>
@@ -78,7 +76,41 @@
 
   <?php include "footer.php"; ?>
 
+  <!-- Load Modal Popups -->
+  <script>
+    function openModal(file) {
+      fetch(file)
+        .then(response => response.text())
+        .then(html => {
+          const modalWrapper = document.createElement('div');
+          modalWrapper.innerHTML = html;
+
+          modalWrapper.style.position = 'fixed';
+          modalWrapper.style.top = 0;
+          modalWrapper.style.left = 0;
+          modalWrapper.style.width = '100vw';
+          modalWrapper.style.height = '100vh';
+          modalWrapper.style.backgroundColor = 'rgba(0,0,0,0.6)';
+          modalWrapper.style.display = 'flex';
+          modalWrapper.style.alignItems = 'center';
+          modalWrapper.style.justifyContent = 'center';
+          modalWrapper.style.zIndex = 9999;
+
+          // Close on outside click
+          modalWrapper.addEventListener('click', function (e) {
+            if (e.target === modalWrapper) {
+              modalWrapper.remove();
+            }
+          });
+
+          document.body.appendChild(modalWrapper);
+        })
+        .catch(error => {
+          alert("Failed to load content: " + error);
+        });
+    }
+  </script>
+
   <script src="./js/contactus.js"></script>
 </body>
-
 </html>

@@ -1,3 +1,21 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$isInCustomerFolder = strpos($_SERVER['PHP_SELF'], 'customer/') !== false;
+$pathPrefix = $isInCustomerFolder ? '../' : './';
+
+$role         = $_SESSION['role'] ?? null;
+$customerName = '';
+$isLoggedIn   = false;
+
+if ($role === 'customer' && isset($_SESSION['customer_name'])) {
+    $customerName = htmlspecialchars($_SESSION['customer_name']);
+    $isLoggedIn = true;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,13 +31,13 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 class="text-3xl font-bold text-center mb-12">ABOUT US</h1>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <!-- Image Card -->
             <div class="bg-black rounded-lg shadow-lg overflow-hidden p-6 flex justify-center">
                 <img src="./images/CoolCarters Sample 2.svg" alt="CoolCarters Logo" class="max-w-full h-auto">
             </div>
-            
+
             <!-- Text Card -->
             <div class="bg-white rounded-lg shadow-lg overflow-hidden p-6">
                 <p class="text-gray-700 leading-relaxed">
@@ -31,13 +49,28 @@
     </div>
 
     <div class="flex justify-between items-center w-full p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
-        <p class="text-lg font-medium text-gray-800">Experience seamless shopping today on CoolCarters. Join us now!</p>
-        <a href="./login.php">
-            <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg cursor-pointer transition-colors shadow-md hover:shadow-lg">
-                Log In
-            </button></a>
-    </div>
+        <p class="text-lg font-medium text-gray-800">
+            <?php if ($isLoggedIn): ?>
+                Thanks for joining CoolCarters, <?= $customerName ?>!
+            <?php else: ?>
+                Experience seamless shopping today on CoolCarters. Join us now!
+            <?php endif; ?>
+        </p>
 
+        <?php if ($isLoggedIn): ?>
+            <a href="<?= $pathPrefix ?>logout.php">
+                <button type="submit" class="px-6 py-3 bg-red-500 text-white rounded-lg cursor-pointer transition-colors shadow-md hover:shadow-lg">
+                    Log Out
+                </button>
+            </a>
+        <?php else: ?>
+            <a href="<?= $pathPrefix ?>login.php">
+                <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg cursor-pointer transition-colors shadow-md hover:shadow-lg">
+                    Log In
+                </button>
+            </a>
+        <?php endif; ?>
+    </div>
     <?php include "aboutusFooter.php"; ?>
 </body>
 

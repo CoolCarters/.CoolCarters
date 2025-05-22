@@ -9,16 +9,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $lastName  = trim($_POST["lastName"]);
     $email     = trim($_POST["email"]);
     $password  = password_hash($_POST["password"], PASSWORD_DEFAULT);
+    $gender    = trim($_POST["gender"] ?? 'Other');
+    $phone     = trim($_POST["phone"] ?? '');
+    $address   = trim($_POST["address"] ?? '');
+    $company   = trim($_POST["companyName"] ?? '');
 
-    // 1) Check duplicate email in CUSTOMER_DETAILS + TRADER_DETAILS
-    $sqlCheck = "
-        SELECT COUNT(*) AS CNT
-        FROM (
-            SELECT EMAIL FROM CUSTOMER_DETAILS WHERE EMAIL = :email
-            UNION ALL
-            SELECT EMAIL FROM TRADER_DETAILS WHERE EMAIL = :email
-        )
-    ";
+    // Validate role
+    $role = ucfirst(strtolower($role));
+    if (!in_array($role, ['Customer', 'Trader'])) {
+        echo "❌ Error: Invalid role.";
+        exit;
+    }
+
+    // 1) Check for duplicate email in USER_TABLE
+    $sqlCheck = "SELECT COUNT(*) AS CNT FROM USER_TABLE WHERE EMAIL = :email";
     $chkStmt = oci_parse($conn, $sqlCheck);
     oci_bind_by_name($chkStmt, ":email", $email);
     oci_execute($chkStmt);
@@ -34,25 +38,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // 2) Generate 6-digit OTP
     $otp = rand(100000, 999999);
 
-    // 3) Store all signup data in session (to be used in verify_otp.php)
+    // 3) Store signup data in session
     $_SESSION['signup'] = [
-        'role'      => $role,
-        'firstName' => $firstName,
-        'lastName'  => $lastName,
-        'email'     => $email,
-        'password'  => $password,
-        'otp'       => $otp
+        'role'         => $role,
+        'firstName'    => $firstName,
+        'lastName'     => $lastName,
+        'email'        => $email,
+        'password'     => $password,
+        'gender'       => ucfirst(strtolower($gender)),
+        'phone'        => $phone,
+        'address'      => $address,
+        'otp'          => $otp
     ];
 
-    // Additional fields for each role
-    if ($role === "customer") {
-        $_SESSION['signup']['gender'] = $_POST["gender"];
-    } elseif ($role === "trader") {
-        $_SESSION['signup']['companyName'] = trim($_POST["companyName"]);
-    } else {
-        echo "❌ Error: Invalid role.";
-        oci_close($conn);
-        exit;
+    if ($role === "Trader") {
+        $_SESSION['signup']['companyName'] = $company;
     }
 
     // 4) Send OTP email
@@ -60,7 +60,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $body = "Hello $firstName,\n\nYour OTP code is: $otp\n\nPlease enter this code to verify your account.\n\n— CoolCarters Team";
 
     if (sendEmail($email, $subject, $body)) {
-        // Redirect to OTP verification page
         header("Location: verify_otp.php");
         exit;
     } else {

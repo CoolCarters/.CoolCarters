@@ -1,294 +1,196 @@
 <?php
 session_start();
+require_once '../connection.php';
 
-// Sample feedback data for trader
-$feedbacks = [
-    [
-        'fid' => 101,
-        'customer_name' => 'John Doe',
-        'email' => 'john@example.com',
-        'message' => 'Great products! The quality was excellent and delivery was fast.',
-        'submitted_at' => '2023-05-15 14:30',
-        'rating' => 5
-    ],
-    [
-        'fid' => 102,
-        'customer_name' => 'Jane Smith',
-        'email' => 'jane@example.com',
-        'message' => "The item didn't match the description. Please improve quality control.",
-        'submitted_at' => '2023-05-10 09:15',
-        'rating' => 2
-    ],
-    [
-        'fid' => 103,
-        'customer_name' => 'Mike Johnson',
-        'email' => 'mike@example.com',
-        'message' => 'Good service overall, but shipping took longer than expected.',
-        'submitted_at' => '2023-05-05 16:45',
-        'rating' => 4
-    ]
-];
+$feedbacks = [];
+$avgRatings = [];
+
+if (isset($_SESSION['trader_id'])) {
+    $trader_id = $_SESSION['trader_id'];
+
+    // Individual feedbacks
+    $sql = "
+        SELECT
+            R.Review_ID AS fid,
+            U.First_Name || ' ' || U.Last_Name AS customer_name,
+            U.Email AS email,
+            R.Rating AS rating,
+            TO_CHAR(R.Review_ID + 100, 'FM999') AS submitted_at
+        FROM REVIEW R
+        JOIN PRODUCT P ON R.fk1_Product_ID = P.Product_ID
+        JOIN SHOP S ON P.fk1_Shop_ID = S.Shop_ID
+        JOIN USER_TABLE U ON R.fk2_User_ID = U.User_ID
+        WHERE S.Trader_ID = :trader_id
+        ORDER BY R.Review_ID DESC
+    ";
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ':trader_id', $trader_id);
+    oci_execute($stmt);
+    while ($row = oci_fetch_assoc($stmt)) {
+        $feedbacks[] = $row;
+    }
+    oci_free_statement($stmt);
+
+    // Average rating per product
+    $avgSql = "
+        SELECT 
+            P.Product_Name,
+            ROUND(AVG(R.Rating), 2) AS Avg_Rating
+        FROM REVIEW R
+        JOIN PRODUCT P ON R.fk1_Product_ID = P.Product_ID
+        JOIN SHOP S ON P.fk1_Shop_ID = S.Shop_ID
+        WHERE S.Trader_ID = :trader_id
+        GROUP BY P.Product_Name
+        ORDER BY P.Product_Name
+    ";
+    $avgStmt = oci_parse($conn, $avgSql);
+    oci_bind_by_name($avgStmt, ':trader_id', $trader_id);
+    oci_execute($avgStmt);
+    while ($row = oci_fetch_assoc($avgStmt)) {
+        $avgRatings[] = $row;
+    }
+    oci_free_statement($avgStmt);
+}
 ?>
-
+<?php include 'navbar.php'; ?>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toggleBtn = document.getElementById('toggleBtn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function () {
+            document.body.classList.toggle('sidebar-collapsed');
+        });
+    }
+});
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CoolCarters Trader Dashboard - Feedbacks</title>
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Trader Feedback - CoolCarters</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #4e73df;
-            --secondary: #2e59d9;
-            --light: #f8f9fc;
-            --dark: #343a40;
-            --text: #858796;
-            --bg: #fff;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Poppins', sans-serif;
-            background: var(--light);
-            color: var(--dark);
-            overflow-x: hidden;
-            min-height: 100vh;
-            padding-bottom: 60px;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 80px 1rem 100px 1rem;
         }
-        
-        /* Main content */
-        #main {
-            margin: 80px 2rem 60px 260px;
+
+        .main-content {
+            margin-left: 240px;
             transition: margin-left 0.3s ease;
         }
-        #main.expanded {
-            margin-left: 260px;
+
+        body.sidebar-collapsed .main-content {
+            margin-left: 70px;
         }
-        .section-header {
-            background: #f8f9fa;
-            padding: .75rem 1rem;
-            font-weight: 500;
-            font-size: 1rem;
-            border-bottom: 1px solid #e3e6f0;
-            color: #4e73df;
-        }
-        .controls {
-            display: flex;
-            gap: 1rem;
-            margin: 1rem 0;
-        }
-        .controls .search {
-            position: relative;
-            flex: 1;
-        }
-        .controls .search input {
-            width: 100%;
-            padding: 0.5rem 2.5rem 0.5rem 0.75rem;
-            border: 1px solid #ddd;
-            border-radius: 0.25rem;
-            transition: border-color 0.2s;
-        }
-        .controls .search input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        .controls .search i {
-            position: absolute;
-            top: 50%;
-            right: 0.75rem;
-            transform: translateY(-50%);
-            color: var(--text);
-        }
-        /* Table */
-        .table-wrap {
-            overflow-x: auto;
-            margin-top: 1rem;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--bg);
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
-        }
-        th, td {
-            border: 1px solid #e3e6f0;
-            padding: 0.75rem;
-            text-align: left;
-        }
-        th {
-            background: #f8f9fc;
-            color: var(--dark);
-            font-weight: 600;
-        }
-        tbody tr:hover {
-            background: #f8f9fc;
-        }
-        .rating {
-            display: flex;
-            gap: 0.25rem;
-        }
-        .rating .star {
-            color: #ffc107;
-        }
-        .rating .empty {
-            color: #e3e6f0;
-        }
-        .action-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            margin-right: 0.5rem;
-            color: var(--text);
-            transition: color 0.2s;
-        }
-        .action-btn:hover {
-            color: var(--primary);
-        }
-        /* Footer */
-        footer {
-            position: fixed;
-            bottom: 0;
-            left: 240px;
-            right: 0;
-            background: var(--bg);
-            padding: .75rem 2rem;
-            box-shadow: 0 -2px 4px rgba(0,0,0,.05);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 10;
-            transition: left 0.3s ease;
-        }
-        .socials a {
-            font-size: 1.2rem;
-            color: var(--text);
-            margin-left: 1rem;
-            transition: color .2s;
-        }
-        .socials a:hover {
-            color: var(--primary);
-        }
-        footer p {
-            font-size: .85rem;
-            color: var(--text);
-        }
-        /* Responsive */
+
         @media (max-width: 768px) {
-            #main { 
-                margin: 80px 1rem 60px 1rem;
+            .main-content {
+                margin-left: 0;
+                padding-top: 70px;
+                padding-bottom: 90px;
             }
-            #main.expanded {
-                margin-left: 260px;
-            }
-            footer { 
-                left: 0;
-            }
-            footer.expanded {
-                left: 240px;
-            }
+        }
+
+        .fa-star.fas {
+            color: #facc15;
+        }
+
+        .fa-star.far {
+            color: #e5e7eb;
+        }
+
+        input#searchInput {
+            max-width: 400px;
         }
     </style>
 </head>
 <body>
-    <!-- Include the navbar -->
-    <?php include 'navbar.php'; ?>
 
-    <!-- Main content -->
-    <section id="main">
-        <div class="section-header">Customer Feedbacks</div>
-        <div class="controls">
-            <div class="search">
-                <input id="searchInput" type="text" placeholder="Search feedback...">
-                <i class="fas fa-search"></i>
-            </div>
-        </div>
-        <div class="table-wrap">
-            <table>
-                <thead>
+<main class="main-content">
+    <h1 class="text-2xl font-semibold text-blue-600 mb-6">Customer Feedback</h1>
+
+    <!-- Average Ratings -->
+    <div class="bg-white rounded shadow mb-6 p-4">
+        <h2 class="text-lg font-semibold mb-3 text-gray-700">Average Ratings per Product</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full table-auto text-sm">
+                <thead class="bg-blue-50 text-blue-900">
                     <tr>
-                        <th>ID</th>
-                        <th>Customer</th>
-                        <th>Rating</th>
-                        <th>Message</th>
-                        <th>Date</th>
-                        <th>Actions</th>
+                        <th class="p-3 text-left">Product Name</th>
+                        <th class="p-3 text-center">Avg. Rating</th>
                     </tr>
                 </thead>
-                <tbody id="feedbackTable">
-                    <?php if (!empty($feedbacks)): ?>
-                        <?php foreach ($feedbacks as $f): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($f['fid']); ?></td>
-                            <td>
-                                <div><?= htmlspecialchars($f['customer_name']); ?></div>
-                                <small class="text-gray-500"><?= htmlspecialchars($f['email']); ?></small>
-                            </td>
-                            <td>
-                                <div class="rating">
-                                    <?php for ($i = 1; $i <= 5; $i++): ?>
-                                        <i class="fas fa-star <?= $i <= $f['rating'] ? 'star' : 'empty' ?>"></i>
-                                    <?php endfor; ?>
-                                </div>
-                            </td>
-                            <td><?= nl2br(htmlspecialchars($f['message'])); ?></td>
-                            <td><?= htmlspecialchars($f['submitted_at']); ?></td>
-                            <td>
-                                <button class="action-btn" title="Reply"><i class="fas fa-reply"></i></button>
-                                <button class="action-btn" title="Mark as read"><i class="fas fa-check"></i></button>
-                            </td>
-                        </tr>
+                <tbody>
+                    <?php if (!empty($avgRatings)): ?>
+                        <?php foreach ($avgRatings as $avg): ?>
+                            <tr class="border-t">
+                                <td class="p-3"><?= htmlspecialchars($avg['PRODUCT_NAME']) ?></td>
+                                <td class="p-3 text-center"><?= htmlspecialchars($avg['AVG_RATING']) ?> ⭐</td>
+                            </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <tr>
-                            <td colspan="6" style="text-align:center; padding:1rem;">
-                                No feedback received yet.
-                            </td>
-                        </tr>
+                        <tr><td colspan="2" class="p-4 text-center text-gray-500">No ratings yet.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
-    </section>
+    </div>
 
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2025 CoolCarter. All rights reserved</p>
-        <div class="socials">
-            <a href="#"><i class="fab fa-instagram"></i></a>
-            <a href="#"><i class="fab fa-facebook-f"></i></a>
-            <a href="#"><i class="fab fa-twitter"></i></a>
-        </div>
-    </footer>
+    <!-- Search & Feedback Table -->
+    <input type="text" id="searchInput" placeholder="Search..." class="w-full mb-4 p-2 border border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200">
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Search functionality
-            const searchInput = document.getElementById('searchInput');
-            searchInput.addEventListener('input', function() {
-                const filter = this.value.toLowerCase();
-                document.querySelectorAll('#feedbackTable tr').forEach(row => {
-                    if (row.cells) {
-                        row.style.display = row.innerText.toLowerCase().includes(filter) ? '' : 'none';
-                    }
-                });
-            });
+    <div class="overflow-x-auto bg-white rounded shadow">
+        <table class="min-w-full table-auto text-sm">
+            <thead class="bg-blue-600 text-white">
+                <tr>
+                    <th class="p-3 text-left">ID</th>
+                    <th class="p-3 text-left">Customer</th>
+                    <th class="p-3 text-center">Rating</th>
+                    <th class="p-3 text-center">Date</th>
+                </tr>
+            </thead>
+            <tbody id="feedbackTable">
+                <?php if (!empty($feedbacks)): ?>
+                    <?php foreach ($feedbacks as $f): ?>
+                        <tr class="border-t hover:bg-gray-50">
+                            <td class="p-3"><?= htmlspecialchars($f['fid']) ?></td>
+                            <td class="p-3">
+                                <div class="font-medium"><?= htmlspecialchars($f['customer_name']) ?></div>
+                                <div class="text-xs text-gray-500"><?= htmlspecialchars($f['email']) ?></div>
+                            </td>
+                            <td class="p-3 text-center">
+                                <div class="flex justify-center">
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <i class="fa-star <?= $i <= $f['rating'] ? 'fas' : 'far' ?>"></i>
+                                    <?php endfor; ?>
+                                </div>
+                            </td>
+                            <td class="p-3 text-center"><?= htmlspecialchars($f['submitted_at']) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr><td colspan="4" class="p-4 text-center text-gray-500">No feedback available.</td></tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</main>
 
-            // Sidebar toggle functionality
-            const toggleBtn = document.getElementById('toggleBtn');
-            const sidebar = document.getElementById('sidebar');
-            const main = document.getElementById('main');
-            const footer = document.querySelector('footer');
-            
-            toggleBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('collapsed');
-                main.classList.toggle('expanded');
-                footer.classList.toggle('expanded');
-            });
+<script>
+    document.getElementById('searchInput').addEventListener('input', function () {
+        const filter = this.value.toLowerCase();
+        document.querySelectorAll('#feedbackTable tr').forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(filter) ? '' : 'none';
         });
-    </script>
+    });
+</script>
+
+<?php include 'traderFooter.php'; ?>
 </body>
 </html>

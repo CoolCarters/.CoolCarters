@@ -1,323 +1,196 @@
 <?php
 session_start();
+require_once '../connection.php';
 
-// Sample shop data
-$shops = [
-    [
-        'id' => 1,
-        'name' => 'Butcher',
-        'logo' => '../images/shops/meat-market.jpg',
-        'location' => '123 Main St, Anytown',
-        'description' => 'Specializing in premium quality meats and poultry'
-    ],
-    [
-        'id' => 2,
-        'name' => 'Bakery',
-        'logo' => '../images/shops/bakery.jpg',
-        'location' => '456 Oak Ave, Somewhere',
-        'description' => 'Fresh bread and pastries made daily'
-    ]
-];
+// Ensure trader_id is set
+$trader_id = $_SESSION['trader_id'] ?? 0;
+$shops = [];
+
+if ($trader_id) {
+    $query = "SELECT * FROM SHOP WHERE TRADER_ID = :trader_id ORDER BY SHOP_ID DESC";
+    $stmt = oci_parse($conn, $query);
+    oci_bind_by_name($stmt, ":trader_id", $trader_id);
+    
+    if (oci_execute($stmt)) {
+        while ($row = oci_fetch_assoc($stmt)) {
+            $shops[] = $row;
+        }
+    } else {
+        $e = oci_error($stmt);
+        echo "❌ SQL Error: " . $e['message'];
+    }
+
+    oci_free_statement($stmt);
+}
 ?>
-
+<?php include 'navbar.php'; ?>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toggleBtn = document.getElementById('toggleBtn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function () {
+            document.body.classList.toggle('sidebar-collapsed');
+        });
+    }
+});
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        :root {
-            --primary: #4e73df;
-            --secondary: #2e59d9;
-            --light: #f8f9fc;
-            --dark: #343a40;
-            --text: #858796;
-            --bg: #fff;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--light);
-            color: var(--dark);
-            overflow-x: hidden;
-            min-height: 100vh;
-            padding-bottom: 60px;
-        }
-        
-        /* Main Content */
-        .main-content {
-            margin-left: 240px;
-            padding: 5rem 2rem 2rem;
-            transition: margin-left 0.3s ease;
-        }
-        .main-content.expanded {
-            margin-left: 260px;
-        }
-        .content-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        .content-header h1 {
-            font-size: 1.5rem;
-            color: var(--dark);
-        }
-        .add-shop {
-            padding: 0.5rem 1rem;
-            background: var(--primary);
-            color: var(--bg);
-            text-decoration: none;
-            border-radius: 4px;
-            transition: 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .add-shop:hover {
-            background: var(--secondary);
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    body.sidebar-collapsed #layoutWrapper {
+      margin-left: 4rem;
+    }
 
-        /* Search and Filter */
-        .search-filter {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .search-bar {
-            flex: 1;
-            max-width: 300px;
-            position: relative;
-        }
-        .search-bar input {
-            width: 100%;
-            padding: 0.5rem 1rem;
-            padding-left: 2.5rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-        .search-bar i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text);
-        }
+    @media (min-width: 1024px) {
+      body:not(.sidebar-collapsed) #layoutWrapper {
+        margin-left: 16rem;
+      }
+    }
 
-        /* Shops Table */
-        .shops-table {
-            width: 100%;
-            background: var(--bg);
-            border-radius: 4px;
-            overflow: hidden;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .shops-table th,
-        .shops-table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        .shops-table th {
-            background: var(--light);
-            font-weight: 500;
-            color: var(--dark);
-        }
-        .shops-table img {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-        .shop-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .shop-details {
-            line-height: 1.4;
-        }
-        .shop-name {
-            font-weight: 500;
-            color: var(--dark);
-        }
-        .shop-location {
-            font-size: 0.875rem;
-            color: var(--text);
-        }
-        .action-buttons {
-            display: flex;
-            gap: 0.5rem;
-        }
-        .action-buttons button {
-            padding: 0.25rem 0.5rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: 0.3s;
-            color: var(--bg);
-        }
-        .action-buttons button:hover {
-            opacity: 0.8;
-        }
-        .action-buttons .edit {
-            background: var(--primary);
-        }
-        .action-buttons .delete {
-            background: #dc3545;
-        }
-       /* Footer */
-        footer {
-            position: fixed;
-            bottom: 0;
-            left: 240px;
-            right: 0;
-            background: var(--bg);
-            padding: .75rem 2rem;
-            box-shadow: 0 -2px 4px rgba(0,0,0,.05);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 10;
-            transition: left 0.3s ease;
-        }
-        .socials a {
-            font-size: 1.2rem;
-            color: var(--text);
-            margin-left: 1rem;
-            transition: color .2s;
-        }
-        .socials a:hover {
-            color: var(--primary);
-        }
-        footer p {
-            font-size: .85rem;
-            color: var(--text);
-        }
- 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .main-content { 
-                margin-left: 0;
-                padding: 5rem 1rem 2rem;
-            }
-            .main-content.expanded {
-                margin-left: 260px;
-            }
-            footer { 
-                left: 0;
-            }
-            footer.expanded {
-                left: 240px;
-            }
-        }
-    </style>
+    @media (max-width: 768px) {
+      #sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+
+      body.sidebar-open #sidebar {
+        transform: translateX(0);
+      }
+
+      body.sidebar-open #layoutWrapper {
+        margin-left: 0;
+      }
+    }
+
+    .action-buttons button {
+      padding: 0.4rem 0.6rem;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .action-buttons .edit {
+      background-color: #4e73df;
+    }
+
+    .action-buttons .delete {
+      background-color: #dc3545;
+    }
+  </style>
 </head>
-<body>
-    <!-- Include the navbar -->
-    <?php include 'navbar.php'; ?>
+<body class="bg-gray-100 font-sans">
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="content-header">
-            <h1>My Shops</h1>
-            <a href="traderAddShop.php" class="add-shop">
-                <i class="fas fa-plus"></i>
-                Add Shop
-            </a>
-        </div>
+<!-- WRAPPER -->
+<div id="layoutWrapper" class="transition-all duration-300">
 
-        <div class="search-filter">
-            <div class="search-bar">
-                <i class="fas fa-search"></i>
-                <input type="text" name="search" placeholder="Search shops...">
-            </div>
-        </div>
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 transition-all duration-300">
 
-        <table class="shops-table">
-            <thead>
-                <tr>
-                    <th>Shop ID</th>
-                    <th>Shop Name</th>
-                    <th>Logo</th>
-                    <th>Location</th>
-                    <th>Description</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($shops as $shop): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($shop['id']) ?></td>
-                        <td><?= htmlspecialchars($shop['name']) ?></td>
-                        <td>
-                            <img src="<?= htmlspecialchars($shop['logo']) ?>" 
-                                 alt="<?= htmlspecialchars($shop['name']) ?>">
-                        </td>
-                        <td><?= htmlspecialchars($shop['location']) ?></td>
-                        <td><?= htmlspecialchars($shop['description']) ?></td>
-                        <td class="action-buttons">
-                            <button class="edit" onclick="editShop(<?= $shop['id'] ?>)">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="delete" onclick="deleteShop(<?= $shop['id'] ?>)">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </main>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+      <h1 class="text-xl font-semibold text-gray-800 mb-4 sm:mb-0">My Shops</h1>
+      <a href="traderAddShop.php" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        <i class="fas fa-plus"></i> Add Shop
+      </a>
+    </div>
 
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2025 CoolCarter. All rights reserved</p>
-        <div class="socials">
-            <a href="#"><i class="fab fa-instagram"></i></a>
-            <a href="#"><i class="fab fa-facebook-f"></i></a>
-            <a href="#"><i class="fab fa-twitter"></i></a>
-        </div>
-    </footer>
+    <div class="mb-6">
+      <div class="relative max-w-sm w-full">
+        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+        <input type="text" name="search" placeholder="Search shops..."
+               class="w-full pl-10 pr-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+      </div>
+    </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const toggleBtn = document.getElementById('toggleBtn');
-            const sidebar = document.getElementById('sidebar');
-            const main = document.querySelector('.main-content');
-            const footer = document.querySelector('footer');
-            
-            toggleBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('collapsed');
-                main.classList.toggle('expanded');
-                footer.classList.toggle('expanded');
-            });
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white border border-gray-200 shadow-md rounded-lg overflow-hidden text-sm">
+        <thead class="bg-gray-100 text-gray-700">
+          <tr>
+            <th class="px-4 py-3 text-left">Shop ID</th>
+            <th class="px-4 py-3 text-left">Shop Name</th>
+            <th class="px-4 py-3 text-left">Image</th>
+            <th class="px-4 py-3 text-left">Location</th>
+            <th class="px-4 py-3 text-left">Description</th>
+            <th class="px-4 py-3 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (!empty($shops)): ?>
+            <?php foreach ($shops as $shop): ?>
+              <tr class="border-t">
+                <td class="px-4 py-3"><?= htmlspecialchars($shop['SHOP_ID']) ?></td>
+                <td class="px-4 py-3"><?= htmlspecialchars($shop['SHOP_NAME']) ?></td>
+                <td class="px-4 py-3">
+                  <img src="../images/default-shop.png" alt="<?= htmlspecialchars($shop['SHOP_NAME']) ?>" class="w-14 h-14 object-cover rounded" />
+                </td>
+                <td class="px-4 py-3"><?= htmlspecialchars($shop['LOCATION']) ?></td>
+                <td class="px-4 py-3"><?= htmlspecialchars($shop['DESCRIPTION']) ?></td>
+                <td class="px-4 py-3">
+                  <div class="action-buttons flex gap-2">
+                    <button class="edit" onclick="editShop(<?= $shop['SHOP_ID'] ?>)">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete" onclick="deleteShop(<?= $shop['SHOP_ID'] ?>)">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <tr>
+              <td colspan="6" class="px-4 py-6 text-center text-gray-500">No shops found. Add your first shop!</td>
+            </tr>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
 
-            // Search functionality
-            const searchInput = document.querySelector('.search-bar input');
-            searchInput.addEventListener('input', function() {
-                const filter = this.value.toLowerCase();
-                document.querySelectorAll('.shops-table tbody tr').forEach(row => {
-                    const text = row.innerText.toLowerCase();
-                    row.style.display = text.includes(filter) ? '' : 'none';
-                });
-            });
-        });
+  </main>
+</div>
 
-        function editShop(shopId) {
-            // In a real application, this would redirect to an edit page
-            alert('Editing shop with ID: ' + shopId);
-            // window.location.href = 'traderEditShop.php?id=' + shopId;
+<script>
+  const searchInput = document.querySelector('input[name="search"]');
+  searchInput.addEventListener('input', function () {
+    const filter = this.value.toLowerCase();
+    document.querySelectorAll('table tbody tr').forEach(row => {
+      const text = row.innerText.toLowerCase();
+      row.style.display = text.includes(filter) ? '' : 'none';
+    });
+  });
+
+  function editShop(shopId) {
+    window.location.href = 'traderEditShop.php?id=' + shopId;
+  }
+
+  function deleteShop(shopId) {
+    if (confirm('Are you sure you want to delete this shop?')) {
+      fetch('delete_shop.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'shop_id=' + shopId
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('Shop deleted successfully');
+          location.reload();
+        } else {
+          alert('Error: ' + data.message);
         }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Error deleting shop');
+      });
+    }
+  }
+</script>
 
-        function deleteShop(shopId) {
-            if (confirm('Are you sure you want to delete this shop?')) {
-                // In a real application, this would make an AJAX call or redirect
-                alert('Shop with ID ' + shopId + ' would be deleted');
-                // window.location.href = 'traderDeleteShop.php?id=' + shopId;
-            }
-        }
-    </script>
+<?php include 'traderFooter.php'; ?>
 </body>
 </html>
