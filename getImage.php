@@ -4,11 +4,7 @@ if (!isset($_GET['id'])) {
     exit("Missing product ID");
 }
 
-$conn = oci_connect("bibash", "bibash", "localhost/xe");
-if (!$conn) {
-    http_response_code(500);
-    exit("Failed to connect to the database.");
-}
+require_once './connection.php';
 
 $id = intval($_GET['id']);
 $sql = "SELECT PRODUCT_IMAGE FROM PRODUCT WHERE PRODUCT_ID = :id";

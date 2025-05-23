@@ -2,7 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-require_once 'connection.php';
+require_once './connection.php';
 
 // Path prefix detection for links
 $isInCustomerFolder = strpos($_SERVER['PHP_SELF'], 'customer/') !== false;
@@ -51,6 +51,7 @@ if (isset($_SESSION['user_id']) && $role === 'customer') {
             position: relative;
             display: inline-block;
         }
+
         .icon-badge__count {
             position: absolute;
             top: -7px;
@@ -161,12 +162,79 @@ if (isset($_SESSION['user_id']) && $role === 'customer') {
 
     <!-- Scripts -->
     <script>
-        // For modal toggle
         function toggleWishlist(show = true) {
-            document.getElementById('wishlist-modal').classList.toggle('hidden', !show);
+            const modal = document.getElementById('wishlist-modal');
+            modal.classList.toggle('hidden', !show);
+            if (show) {
+                fetchWishlist();
+            }
         }
+
         function toggleCart(show = true) {
-            document.getElementById('cart-modal').classList.toggle('hidden', !show);
+            const modal = document.getElementById('cart-modal');
+            modal.classList.toggle('hidden', !show);
+            if (show) {
+                fetchCart();
+            }
+        }
+
+        function fetchWishlist() {
+            fetch('fetch_wishlist.php')
+                .then(res => res.json())
+                .then(data => {
+                    const body = document.getElementById('wishlist-body');
+                    body.innerHTML = '';
+                    if (!data.success || !data.items.length) {
+                        body.innerHTML = '<div class="text-center text-gray-500 py-8">No items in wishlist.</div>';
+                        return;
+                    }
+                    data.items.forEach(item => {
+                        body.innerHTML += `
+                    <div class="flex items-center justify-between border-b pb-3 mb-3">
+                        <img src="${item.image}" class="w-12 h-12 object-cover rounded shadow" alt="${item.name}">
+                        <div class="flex-1 ml-4">
+                            <div class="font-semibold">${item.name}</div>
+                            <div class="text-gray-500 text-sm">${item.category}</div>
+                            <div class="text-green-600 font-bold">$${parseFloat(item.price).toFixed(2)}</div>
+                        </div>
+                        <form method="post" action="remove_from_wishlist.php" class="ml-3">
+                            <input type="hidden" name="product_id" value="${item.id}">
+                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white rounded p-1 px-2 text-xs">Remove</button>
+                        </form>
+                    </div>`;
+                    });
+                });
+        }
+
+        function fetchCart() {
+            fetch('fetch_cart.php')
+                .then(res => res.json())
+                .then(data => {
+                    const body = document.getElementById('cart-body');
+                    body.innerHTML = '';
+                    if (!data.success || !data.items.length) {
+                        body.innerHTML = '<div class="text-center text-gray-500 py-8">No items in cart.</div>';
+                        return;
+                    }
+                    let total = 0;
+                    data.items.forEach(item => {
+                        total += item.price * item.quantity;
+                        body.innerHTML += `
+                    <div class="flex items-center justify-between border-b pb-3 mb-3">
+                        <img src="${item.image}" class="w-12 h-12 object-cover rounded shadow" alt="${item.name}">
+                        <div class="flex-1 ml-4">
+                            <div class="font-semibold">${item.name}</div>
+                            <div class="text-gray-500 text-sm">${item.category}</div>
+                            <div class="text-green-600 font-bold">$${parseFloat(item.price).toFixed(2)} x ${item.quantity}</div>
+                        </div>
+                        <form method="post" action="remove_from_cart.php" class="ml-3">
+                            <input type="hidden" name="product_id" value="${item.id}">
+                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white rounded p-1 px-2 text-xs">Remove</button>
+                        </form>
+                    </div>`;
+                    });
+                    body.innerHTML += `<div class="font-bold text-right text-lg pt-4">Total: $${total.toFixed(2)}</div>`;
+                });
         }
 
         // Mobile menu toggle
@@ -175,4 +243,5 @@ if (isset($_SESSION['user_id']) && $role === 'customer') {
         });
     </script>
 </body>
+
 </html>

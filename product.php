@@ -68,54 +68,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     if (!isset($_SESSION['user_id']) || strtolower($_SESSION['role']) !== 'customer') {
         $cart_message = "Please log in as a customer to use cart.";
     } else {
-        $userId = $_SESSION['user_id'];
+        $userId = (int)$_SESSION['user_id'];
         $cartId = null;
-        // Check for existing cart
-        $cartFind = oci_parse($conn, "SELECT Cart_ID FROM CART WHERE fk1_User_ID = :uid");
-        oci_bind_by_name($cartFind, ":uid", $userId);
-        oci_execute($cartFind);
-        if ($cartRow = oci_fetch_assoc($cartFind)) {
+
+        // 1. Check for existing cart for this user
+        $sqlCheckCart = "SELECT CART_ID FROM CART WHERE FK1_USER_ID = :user_id_var";
+        $stmtCheckCart = oci_parse($conn, $sqlCheckCart);
+        oci_bind_by_name($stmtCheckCart, ":user_id_var", $userId);
+        oci_execute($stmtCheckCart);
+        if ($cartRow = oci_fetch_assoc($stmtCheckCart)) {
             $cartId = $cartRow['CART_ID'];
-        } else {
-            // Create cart
-            $cartInsert = oci_parse($conn, "INSERT INTO CART (Cart_ID, Total_Price, fk1_User_ID) VALUES (NULL, 0, :uid)");
-            oci_bind_by_name($cartInsert, ":uid", $userId);
-            oci_execute($cartInsert);
-            oci_free_statement($cartInsert);
-            // Fetch cart id
-            $cartFind2 = oci_parse($conn, "SELECT Cart_ID FROM CART WHERE fk1_User_ID = :uid");
-            oci_bind_by_name($cartFind2, ":uid", $userId);
-            oci_execute($cartFind2);
-            if ($cartRow2 = oci_fetch_assoc($cartFind2)) $cartId = $cartRow2['CART_ID'];
-            oci_free_statement($cartFind2);
         }
-        oci_free_statement($cartFind);
+        oci_free_statement($stmtCheckCart);
 
-        if ($cartId) {
-            $qty = max(1, min(20, (int)($_POST['quantity'] ?? 1)));
-            // Check for existing product in cart
-            $prodCartFind = oci_parse($conn, "SELECT Quantity FROM PRODUCT_CART WHERE Product_ID = :pid AND Cart_ID = :cid");
-            oci_bind_by_name($prodCartFind, ":pid", $productId);
-            oci_bind_by_name($prodCartFind, ":cid", $cartId);
-            oci_execute($prodCartFind);
+        // 2. If cart does not exist, create it
+        if (!$cartId) {
+            $sqlCreateCart = "INSERT INTO CART (CART_ID, TOTAL_PRICE, FK1_USER_ID) VALUES (NULL, 0, :user_id_var)";
+            $stmtCreateCart = oci_parse($conn, $sqlCreateCart);
+            oci_bind_by_name($stmtCreateCart, ":user_id_var", $userId);
+            oci_execute($stmtCreateCart);
+            oci_free_statement($stmtCreateCart);
 
-            if ($prodCartRow = oci_fetch_assoc($prodCartFind)) {
-                $newQty = $prodCartRow['QUANTITY'] + $qty;
-                $prodCartUpd = oci_parse($conn, "UPDATE PRODUCT_CART SET Quantity = :qty WHERE Product_ID = :pid AND Cart_ID = :cid");
-                oci_bind_by_name($prodCartUpd, ":qty", $newQty);
-                oci_bind_by_name($prodCartUpd, ":pid", $productId);
-                oci_bind_by_name($prodCartUpd, ":cid", $cartId);
-                oci_execute($prodCartUpd);
-                oci_free_statement($prodCartUpd);
-            } else {
-                $prodCartIns = oci_parse($conn, "INSERT INTO PRODUCT_CART (Product_ID, Cart_ID, Quantity) VALUES (:pid, :cid, :qty)");
-                oci_bind_by_name($prodCartIns, ":pid", $productId);
-                oci_bind_by_name($prodCartIns, ":cid", $cartId);
-                oci_bind_by_name($prodCartIns, ":qty", $qty);
-                oci_execute($prodCartIns);
-                oci_free_statement($prodCartIns);
+            // Fetch the new cart id
+            $sqlGetCart = "SELECT CART_ID FROM CART WHERE FK1_USER_ID = :user_id_var";
+            $stmtGetCart = oci_parse($conn, $sqlGetCart);
+            oci_bind_by_name($stmtGetCart, ":user_id_var", $userId);
+            oci_execute($stmtGetCart);
+            if ($cartRow2 = oci_fetch_assoc($stmtGetCart)) {
+                $cartId = $cartRow2['CART_ID'];
             }
-            oci_free_statement($prodCartFind);
+            oci_free_statement($stmtGetCart);
+        }
+
+        $productIdVar = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+        if ($productIdVar <= 0) {
+            $cart_message = "Invalid product ID.";
+        } elseif ($cartId) {
+            $cartIdVar = (int)$cartId;
+            $qty = max(1, min(20, (int)($_POST['quantity'] ?? 1)));
+            $sqlCheckProduct = "SELECT QUANTITY FROM PRODUCT_CART WHERE PRODUCT_ID = :product_id_var AND CART_ID = :cart_id_var";
+            $stmtCheckProduct = oci_parse($conn, $sqlCheckProduct);
+            oci_bind_by_name($stmtCheckProduct, ":product_id_var", $productIdVar);
+            oci_bind_by_name($stmtCheckProduct, ":cart_id_var", $cartIdVar);
+            oci_execute($stmtCheckProduct);
+            if ($prodCartRow = oci_fetch_assoc($stmtCheckProduct)) {
+                $newQty = min(20, $prodCartRow['QUANTITY'] + $qty);
+                $sqlUpdateCart = "UPDATE PRODUCT_CART SET QUANTITY = :qty_var WHERE PRODUCT_ID = :product_id_var AND CART_ID = :cart_id_var";
+                $stmtUpdateCart = oci_parse($conn, $sqlUpdateCart);
+                oci_bind_by_name($stmtUpdateCart, ":qty_var", $newQty);
+                oci_bind_by_name($stmtUpdateCart, ":product_id_var", $productIdVar);
+                oci_bind_by_name($stmtUpdateCart, ":cart_id_var", $cartIdVar);
+                oci_execute($stmtUpdateCart);
+                oci_free_statement($stmtUpdateCart);
+            } else {
+                $sqlInsertCart = "INSERT INTO PRODUCT_CART (PRODUCT_ID, CART_ID, QUANTITY) VALUES (:product_id_var, :cart_id_var, :qty_var)";
+                $stmtInsertCart = oci_parse($conn, $sqlInsertCart);
+                oci_bind_by_name($stmtInsertCart, ":product_id_var", $productIdVar);
+                oci_bind_by_name($stmtInsertCart, ":cart_id_var", $cartIdVar);
+                oci_bind_by_name($stmtInsertCart, ":qty_var", $qty);
+                oci_execute($stmtInsertCart);
+                oci_free_statement($stmtInsertCart);
+            }
+            oci_free_statement($stmtCheckProduct);
             $cart_message = "Added to cart!";
         } else {
             $cart_message = "❌ Cart ID error!";
@@ -128,45 +142,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_wishlist'])) {
     if (!isset($_SESSION['user_id']) || strtolower($_SESSION['role']) !== 'customer') {
         $wishlist_message = "Please log in as a customer to add to wishlist.";
     } else {
-        $userId = $_SESSION['user_id'];
+        $userId = (int)$_SESSION['user_id'];
         $wishlistId = null;
-        // Check for existing wishlist
-        $wlFind = oci_parse($conn, "SELECT Wishlist_ID FROM WISHLIST WHERE fk1_User_ID = :uid");
-        oci_bind_by_name($wlFind, ":uid", $userId);
-        oci_execute($wlFind);
-        if ($wlRow = oci_fetch_assoc($wlFind)) {
-            $wishlistId = $wlRow['WISHLIST_ID'];
-        } else {
-            $wlInsert = oci_parse($conn, "INSERT INTO WISHLIST (Wishlist_ID, No_Of_Products, fk1_User_ID) VALUES (NULL, 0, :uid)");
-            oci_bind_by_name($wlInsert, ":uid", $userId);
-            oci_execute($wlInsert);
-            oci_free_statement($wlInsert);
-            // Fetch wishlist id
-            $wlFind2 = oci_parse($conn, "SELECT Wishlist_ID FROM WISHLIST WHERE fk1_User_ID = :uid");
-            oci_bind_by_name($wlFind2, ":uid", $userId);
-            oci_execute($wlFind2);
-            if ($wlRow2 = oci_fetch_assoc($wlFind2)) $wishlistId = $wlRow2['WISHLIST_ID'];
-            oci_free_statement($wlFind2);
-        }
-        oci_free_statement($wlFind);
 
-        if ($wishlistId) {
-            // Check if product is already in wishlist
-            $prodWishlistFind = oci_parse($conn, "SELECT * FROM PRODUCT_WISHLIST WHERE Product_ID = :pid AND Wishlist_ID = :wid");
-            oci_bind_by_name($prodWishlistFind, ":pid", $productId);
-            oci_bind_by_name($prodWishlistFind, ":wid", $wishlistId);
-            oci_execute($prodWishlistFind);
-            if (!oci_fetch_assoc($prodWishlistFind)) {
-                $prodWishlistIns = oci_parse($conn, "INSERT INTO PRODUCT_WISHLIST (Product_ID, Wishlist_ID) VALUES (:pid, :wid)");
-                oci_bind_by_name($prodWishlistIns, ":pid", $productId);
-                oci_bind_by_name($prodWishlistIns, ":wid", $wishlistId);
-                oci_execute($prodWishlistIns);
-                oci_free_statement($prodWishlistIns);
-                $wishlist_message = "Added to wishlist!";
-            } else {
-                $wishlist_message = "Already in wishlist!";
+        // 1. Check for existing wishlist for this user
+        $sqlCheckWishlist = "SELECT WISHLIST_ID FROM WISHLIST WHERE FK1_USER_ID = :user_id_var";
+        $stmtCheckWishlist = oci_parse($conn, $sqlCheckWishlist);
+        oci_bind_by_name($stmtCheckWishlist, ":user_id_var", $userId);
+        oci_execute($stmtCheckWishlist);
+        if ($wishlistRow = oci_fetch_assoc($stmtCheckWishlist)) {
+            $wishlistId = $wishlistRow['WISHLIST_ID'];
+        }
+        oci_free_statement($stmtCheckWishlist);
+
+        // 2. If wishlist does not exist, create it
+        if (!$wishlistId) {
+            $sqlCreateWishlist = "INSERT INTO WISHLIST (WISHLIST_ID, NO_OF_PRODUCTS, FK1_USER_ID) VALUES (NULL, 0, :user_id_var)";
+            $stmtCreateWishlist = oci_parse($conn, $sqlCreateWishlist);
+            oci_bind_by_name($stmtCreateWishlist, ":user_id_var", $userId);
+            oci_execute($stmtCreateWishlist);
+            oci_free_statement($stmtCreateWishlist);
+
+            // Fetch the new wishlist id
+            $sqlGetWishlist = "SELECT WISHLIST_ID FROM WISHLIST WHERE FK1_USER_ID = :user_id_var";
+            $stmtGetWishlist = oci_parse($conn, $sqlGetWishlist);
+            oci_bind_by_name($stmtGetWishlist, ":user_id_var", $userId);
+            oci_execute($stmtGetWishlist);
+            if ($wishlistRow2 = oci_fetch_assoc($stmtGetWishlist)) {
+                $wishlistId = $wishlistRow2['WISHLIST_ID'];
             }
-            oci_free_statement($prodWishlistFind);
+            oci_free_statement($stmtGetWishlist);
+        }
+
+        $productIdVar = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+        if ($productIdVar <= 0) {
+            $wishlist_message = "Invalid product ID.";
+        } elseif ($wishlistId) {
+            $wishlistIdVar = (int)$wishlistId;
+
+            $sqlCheckProduct = "SELECT 1 FROM PRODUCT_WISHLIST WHERE PRODUCT_ID = :product_id_var AND WISHLIST_ID = :wishlist_id_var";
+            $stmtCheckProduct = oci_parse($conn, $sqlCheckProduct);
+            oci_bind_by_name($stmtCheckProduct, ":product_id_var", $productIdVar);
+            oci_bind_by_name($stmtCheckProduct, ":wishlist_id_var", $wishlistIdVar);
+            oci_execute($stmtCheckProduct);
+            if (oci_fetch_assoc($stmtCheckProduct)) {
+                $wishlist_message = "Already in wishlist!";
+            } else {
+                $sqlInsertWishlist = "INSERT INTO PRODUCT_WISHLIST (PRODUCT_ID, WISHLIST_ID) VALUES (:product_id_var, :wishlist_id_var)";
+                $stmtInsertWishlist = oci_parse($conn, $sqlInsertWishlist);
+                oci_bind_by_name($stmtInsertWishlist, ":product_id_var", $productIdVar);
+                oci_bind_by_name($stmtInsertWishlist, ":wishlist_id_var", $wishlistIdVar);
+                oci_execute($stmtInsertWishlist);
+                oci_free_statement($stmtInsertWishlist);
+                $wishlist_message = "Added to wishlist!";
+            }
+            oci_free_statement($stmtCheckProduct);
         } else {
             $wishlist_message = "❌ Wishlist ID error!";
         }
